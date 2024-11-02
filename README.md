@@ -16,10 +16,9 @@ English | [日本語](README_ja.md)
     - [install\_go\_specific.sh](#install_go_specificsh)
     - [switch\_go\_version.sh](#switch_go_versionsh)
     - [list\_go\_versions.sh](#list_go_versionssh)
-  - [Additional Information](#additional-information)
   - [Developer Options](#developer-options)
     - [Setting Up Pre-commit Hook for Shell Scripts](#setting-up-pre-commit-hook-for-shell-scripts)
-      - [Steps to Set Up Pre-commit Hook](#steps-to-set-up-pre-commit-hook)
+    - [Steps to Set Up Pre-commit Hook](#steps-to-set-up-pre-commit-hook)
 
 ## Notes
 
@@ -117,24 +116,13 @@ This script retrieves all available versions from the [Go download page](https:/
 
 ---
 
-## Additional Information
-
-To retrieve the list of Go versions available for installation via the Go command, run:
-
-```bash
-go install golang.org/dl@latest
-go list golang.org/dl/go1.*
-```
-
-This will display the versions that can be installed via `golang.org/dl`.
-
 ## Developer Options
 
 ### Setting Up Pre-commit Hook for Shell Scripts
 
 To help maintain code quality, you can set up a `pre-commit` hook that automatically runs `shellcheck` on all shell scripts before each commit. This will prevent commits if `shellcheck` finds any issues, ensuring that only error-free scripts are committed.
 
-#### Steps to Set Up Pre-commit Hook
+### Steps to Set Up Pre-commit Hook
 
 1. Install `shellcheck`
 

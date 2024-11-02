@@ -16,8 +16,6 @@
     - [install\_go\_specific.sh](#install_go_specificsh)
     - [switch\_go\_version.sh](#switch_go_versionsh)
     - [list\_go\_versions.sh](#list_go_versionssh)
-  - [追加情報](#追加情報)
-  - [追加情報](#追加情報-1)
     - [Pre-commitフック設定手順](#pre-commitフック設定手順)
 
 ## 注意事項
@@ -40,7 +38,7 @@ cd scripts/ubuntu
 
 ### install_go_replace_default.sh
 
-`/usr/local/go`に既存のバージョンを置き換えて、デフォルトバージョンのGoをインストールします。[^1]
+`/usr/local/go`に既存のバージョンを置き換えて、デフォルトバージョンのGoをインストールします。
 
 使用方法
 
@@ -116,28 +114,6 @@ source ./switch_go_version.sh <goバージョン>
 このスクリプトは、[Goダウンロードページ](https://go.dev/dl/)から利用可能なすべてのバージョンを取得して表示します。
 
 ---
-
-## 追加情報
-
-Goコマンドを介してインストール可能なGoバージョンのリストを取得するには、以下を実行します：
-
-```bash
-go install golang.org/dl@latest
-go list golang.org/dl/go1.*
-```
-
-これにより、`golang.org/dl`を介してインストール可能なバージョンが表示されます。
-
-## 追加情報
-
-Goコマンドを介してインストール可能なGoバージョンのリストを取得するには、以下を実行します：
-
-```bash
-go install golang.org/dl@latest
-go list golang.org/dl/go1.*
-```
-
-これにより、`golang.org/dl`を介してインストール可能なバージョンが表示されます。
 
 ### Pre-commitフック設定手順
 

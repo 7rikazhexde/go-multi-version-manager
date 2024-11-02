@@ -17,6 +17,9 @@ English | [日本語](README_ja.md)
     - [switch\_go\_version.sh](#switch_go_versionsh)
     - [list\_go\_versions.sh](#list_go_versionssh)
   - [Additional Information](#additional-information)
+  - [Developer Options](#developer-options)
+    - [Setting Up Pre-commit Hook for Shell Scripts](#setting-up-pre-commit-hook-for-shell-scripts)
+      - [Steps to Set Up Pre-commit Hook](#steps-to-set-up-pre-commit-hook)
 
 ## Notes
 
@@ -124,3 +127,38 @@ go list golang.org/dl/go1.*
 ```
 
 This will display the versions that can be installed via `golang.org/dl`.
+
+## Developer Options
+
+### Setting Up Pre-commit Hook for Shell Scripts
+
+To help maintain code quality, you can set up a `pre-commit` hook that automatically runs `shellcheck` on all shell scripts before each commit. This will prevent commits if `shellcheck` finds any issues, ensuring that only error-free scripts are committed.
+
+#### Steps to Set Up Pre-commit Hook
+
+1. Install `shellcheck`
+
+  Make sure `shellcheck` is installed on your system. If it is not installed, use the following command to install it.
+
+  ```bash
+  sudo apt install shellcheck
+  ```
+
+1. Add Execution Permission
+
+  First, make sure the `create_pre-commit.sh` script has execution permission:
+
+  ```bash
+  chmod +x scripts/ci/create_pre-commit.sh
+  ```
+
+1. Run the `create_pre-commit.sh` script
+
+  Execute the following command from the root directory of the project to set up the `pre-commit` hook
+
+  ```bash
+  ./scripts/ci/create_pre-commit.sh
+  ```
+
+  This will create a `pre-commit` hook under `.git/hooks/`. The hook will automatically execute `shellcheck` on all `.sh` files located in `scripts/ubuntu` each time a commit is attempted.  
+  If you want to run the `pre-commit` hook manually before committing, run `.git/hooks/pre-commit`.

@@ -1,37 +1,42 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HOOK_PATH="$SCRIPT_DIR/../../.git/hooks/pre-commit"
 
 create_pre_commit() {
-    cat > "$1" << EOF
+    # Creating pre-commit hooks
+    cat > "$HOOK_PATH" << 'EOF'
 #!/bin/bash
 
 # Pre-commit hook to run shellcheck on all .sh files in scripts/ubuntu
-./scripts/ci/shellcheckfiles.sh "$SCRIPT_DIR/../scripts/ubuntu"
-if [ \$? -ne 0 ]; then
+./scripts/ci/shellcheckfiles.sh "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../../scripts/ubuntu"
+if [ $? -ne 0 ]; then
     echo "Commit aborted due to shellcheck errors."
     exit 1
 fi
 EOF
 
-    if [ "$2" == "execute" ]; then
-        chmod +x "$1"
-        echo "$1 created with execution permission."
+    # Check existence of files and grant permissions after creation
+    if [ -f "$HOOK_PATH" ]; then
+        chmod +x "$HOOK_PATH"
+        echo "$HOOK_PATH created with execution permission."
     else
-        echo "$1 created."
+        echo "Error: Failed to create $HOOK_PATH."
+        exit 1
     fi
 }
 
-if [ -f "$SCRIPT_DIR/../.git/hooks/pre-commit" ]; then
-    read -r -p "$SCRIPT_DIR/../.git/hooks/pre-commit already exists. Do you want to create $SCRIPT_DIR/../.git/hooks/pre-commit.second instead? (y/N): " choice
+# Processing when there is an existing hook
+if [ -f "$HOOK_PATH" ]; then
+    read -r -p "$HOOK_PATH already exists. Overwrite it? (y/N): " choice
     if [[ $choice == "y" || $choice == "Y" ]]; then
-        create_pre_commit "$SCRIPT_DIR/../.git/hooks/pre-commit.second"
-        exit 0
+        create_pre_commit
     else
-        create_pre_commit "$SCRIPT_DIR/../.git/hooks/pre-commit" "execute"
+        echo "Aborted."
         exit 0
     fi
+else
+    create_pre_commit
 fi
 
-create_pre_commit "$SCRIPT_DIR/../.git/hooks/pre-commit" "execute"
 exit 0

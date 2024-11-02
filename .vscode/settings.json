@@ -1,0 +1,8 @@
+{
+    "files.exclude": {
+        // glob pattern setting to exclude files and folders
+        // Explorer determines which files and folders to show or hide based on this setting. (true is hidden)
+        // Show .git folders (hidden by default)
+        "**/.git": false
+    }
+}

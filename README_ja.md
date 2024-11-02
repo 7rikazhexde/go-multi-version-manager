@@ -17,6 +17,8 @@
     - [switch\_go\_version.sh](#switch_go_versionsh)
     - [list\_go\_versions.sh](#list_go_versionssh)
   - [追加情報](#追加情報)
+  - [追加情報](#追加情報-1)
+    - [Pre-commitフック設定手順](#pre-commitフック設定手順)
 
 ## 注意事項
 
@@ -125,3 +127,43 @@ go list golang.org/dl/go1.*
 ```
 
 これにより、`golang.org/dl`を介してインストール可能なバージョンが表示されます。
+
+## 追加情報
+
+Goコマンドを介してインストール可能なGoバージョンのリストを取得するには、以下を実行します：
+
+```bash
+go install golang.org/dl@latest
+go list golang.org/dl/go1.*
+```
+
+これにより、`golang.org/dl`を介してインストール可能なバージョンが表示されます。
+
+### Pre-commitフック設定手順
+
+1. `shellcheck`のインストール
+
+   `shellcheck`がシステムにインストールされていることを確認してください。インストールされていない場合は、以下のコマンドでインストールしてください。
+
+   ```bash
+   sudo apt install shellcheck
+   ```
+
+1. 実行権限の追加
+
+   まず、`create_pre-commit.sh`スクリプトに実行権限があることを確認します。
+
+   ```bash
+   chmod +x scripts/ci/create_pre-commit.sh
+   ```
+
+1. `create_pre-commit.sh`スクリプトの実行
+
+   プロジェクトのルートディレクトリから、以下のコマンドを実行して`pre-commit`フックを設定します。
+
+   ```bash
+   ./scripts/ci/create_pre-commit.sh
+   ```
+
+   これにより、`.git/hooks/`に`pre-commit`フックが作成されます。このフックは、コミット時に`scripts/ubuntu`内のすべての`.sh`ファイルに対して自動的に`shellcheck`を実行します。  
+   コミット前に手動で`pre-commit`フックを実行したい場合は、`.git/hooks/pre-commit`を実行してください。

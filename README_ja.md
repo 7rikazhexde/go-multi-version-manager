@@ -9,13 +9,20 @@
 - [go-multi-version-manager](#go-multi-version-manager)
   - [目次](#目次)
   - [注意事項](#注意事項)
+  - [インストール方法](#インストール方法)
+    - [自動インストール](#自動インストール)
+    - [手動インストール](#手動インストール)
   - [使用方法](#使用方法)
+    - [基本的なコマンド](#基本的なコマンド)
+    - [Goバージョンの切り替え](#goバージョンの切り替え)
   - [スクリプト](#スクリプト)
     - [install\_go\_replace\_default.sh](#install_go_replace_defaultsh)
     - [install\_go\_with\_command.sh](#install_go_with_commandsh)
     - [install\_go\_specific.sh](#install_go_specificsh)
     - [switch\_go\_version.sh](#switch_go_versionsh)
     - [list\_go\_versions.sh](#list_go_versionssh)
+  - [開発者向けオプション](#開発者向けオプション)
+    - [シェルスクリプト用のPre-commitフックの設定](#シェルスクリプト用のpre-commitフックの設定)
     - [Pre-commitフック設定手順](#pre-commitフック設定手順)
 
 ## 注意事項
@@ -27,14 +34,73 @@
 
 [^1]: `export PATH=/usr/local/go/bin:$PATH`
 
-## 使用方法
+## インストール方法
+
+### 自動インストール
+
+go-multi-version-managerを設定する最も簡単な方法は、インストーラースクリプトを使用することです：
 
 ```bash
-git clone https://github.com/7rikazhexde/go-multi-version-manager.git
-cd scripts/ubuntu
+# インストーラースクリプトをダウンロードして実行
+curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh -o gomvm-install.sh
+chmod +x gomvm-install.sh
+./gomvm-install.sh
+
+# PATH設定を更新
+source ~/.bashrc
 ```
 
+### 手動インストール
+
+あるいは、リポジトリをクローンして手動で設定することもできます：
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/7rikazhexde/go-multi-version-manager.git
+cd go-multi-version-manager
+
+# gomvmをセットアップ
+./gomvm setup
+
+# PATH設定を更新
+source ~/.bashrc
+```
+
+## 使用方法
+
+### 基本的なコマンド
+
+インストール後、以下のコマンドを使用できます：
+
+```bash
+# 利用可能なGoバージョンをリスト表示
+gomvm list
+
+# 特定のGoバージョンをインストール
+gomvm install 1.24.1
+
+# インストール済みのGoバージョンをリスト表示
+gomvm installed
+
+# 特定のGoバージョンをアンインストール
+gomvm uninstall 1.24.1
+```
+
+### Goバージョンの切り替え
+
+インストール済みのGoバージョン間を切り替えるには、`source`コマンドと`gomvm switch`を使用します：
+
+```bash
+# Go 1.24.1に切り替え
+source gomvm switch 1.24.1
+```
+
+> [!IMPORTANT]
+> 変更を現在のシェルに反映させるために、常に`switch`コマンドで`source`コマンドを使用してください。
+
 ## スクリプト
+
+以下のスクリプトは`gomvm`コマンドによって内部的に使用されますが、必要に応じて直接使用することもできます：
 
 ### install_go_replace_default.sh
 
@@ -114,6 +180,12 @@ source ./switch_go_version.sh <goバージョン>
 このスクリプトは、[Goダウンロードページ](https://go.dev/dl/)から利用可能なすべてのバージョンを取得して表示します。
 
 ---
+
+## 開発者向けオプション
+
+### シェルスクリプト用のPre-commitフックの設定
+
+コード品質を維持するのに役立つように、コミットの前にすべてのシェルスクリプトに対して自動的に`shellcheck`を実行する`pre-commit`フックを設定できます。これにより、`shellcheck`が問題を発見した場合にコミットが防止され、エラーのないスクリプトのみがコミットされるようになります。
 
 ### Pre-commitフック設定手順
 

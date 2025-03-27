@@ -9,7 +9,12 @@ English | [日本語](README_ja.md)
 - [go-multi-version-manager](#go-multi-version-manager)
   - [Table of Contents](#table-of-contents)
   - [Notes](#notes)
+  - [Installation](#installation)
+    - [Automatic Installation](#automatic-installation)
+    - [Manual Installation](#manual-installation)
   - [Usage](#usage)
+    - [Basic Commands](#basic-commands)
+    - [Switching Go Versions](#switching-go-versions)
   - [Scripts](#scripts)
     - [install\_go\_replace\_default.sh](#install_go_replace_defaultsh)
     - [install\_go\_with\_command.sh](#install_go_with_commandsh)
@@ -29,14 +34,73 @@ English | [日本語](README_ja.md)
 
 [^1]: `export PATH=/usr/local/go/bin:$PATH`
 
-## Usage
+## Installation
+
+### Automatic Installation
+
+The easiest way to set up go-multi-version-manager is using the installer script:
 
 ```bash
-git clone https://github.com/7rikazhexde/go-multi-version-manager.git
-cd scripts/ubuntu
+# Download and run the installer script
+curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh -o gomvm-install.sh
+chmod +x gomvm-install.sh
+./gomvm-install.sh
+
+# Load updated PATH settings
+source ~/.bashrc
 ```
 
+### Manual Installation
+
+Alternatively, you can clone the repository and set it up manually:
+
+```bash
+# Clone the repository
+git clone https://github.com/7rikazhexde/go-multi-version-manager.git
+cd go-multi-version-manager
+
+# Set up gomvm
+./gomvm setup
+
+# Load updated PATH settings
+source ~/.bashrc
+```
+
+## Usage
+
+### Basic Commands
+
+After installation, you can use the following commands:
+
+```bash
+# List available Go versions
+gomvm list
+
+# Install a specific Go version
+gomvm install 1.24.1
+
+# List installed Go versions
+gomvm installed
+
+# Uninstall a specific Go version
+gomvm uninstall 1.24.1
+```
+
+### Switching Go Versions
+
+To switch between installed Go versions, use the `source` command with `gomvm switch`:
+
+```bash
+# Switch to Go 1.24.1
+source gomvm switch 1.24.1
+```
+
+> [!IMPORTANT]
+> Always use the `source` command with `switch` to make the changes take effect in your current shell.
+
 ## Scripts
+
+The following scripts are used internally by the `gomvm` command, but can also be used directly if needed:
 
 ### install_go_replace_default.sh
 

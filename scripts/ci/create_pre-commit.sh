@@ -14,6 +14,25 @@ if [ $? -ne 0 ]; then
     echo "Commit aborted due to shellcheck errors."
     exit 1
 fi
+
+# Pre-commit hook to run shellcheck on .sh files in repository root
+./scripts/ci/shellcheckfiles.sh "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../.."
+if [ $? -ne 0 ]; then
+    echo "Commit aborted due to shellcheck errors."
+    exit 1
+fi
+
+# Check gomvm file in repository root
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../.."
+if [ -f "$REPO_ROOT/gomvm" ]; then
+    echo "Running shellcheck on $REPO_ROOT/gomvm..."
+    shellcheck "$REPO_ROOT/gomvm"
+    if [ $? -ne 0 ]; then
+        echo "Commit aborted due to shellcheck errors in gomvm."
+        exit 1
+    fi
+    echo "----------------------------------------"
+fi
 EOF
 
     # Check existence of files and grant permissions after creation

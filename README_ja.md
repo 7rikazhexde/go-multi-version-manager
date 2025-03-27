@@ -13,6 +13,7 @@
   - [インストール方法](#インストール方法)
     - [自動インストール](#自動インストール)
     - [手動インストール](#手動インストール)
+    - [自動アンインストール](#自動アンインストール)
   - [使用方法](#使用方法)
     - [基本的なコマンド](#基本的なコマンド)
     - [Goバージョンの切り替え](#goバージョンの切り替え)
@@ -51,8 +52,6 @@ export PATH=$HOME/go/bin:$PATH
 
 ### 自動インストール
 
-インストーラースクリプトを使用してリポジトリのcloneと
-
 ```bash
 # インストーラースクリプトをダウンロードして実行
 curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh | bash
@@ -75,6 +74,12 @@ cd go-multi-version-manager
 
 # PATH設定を更新
 source ~/.bashrc
+```
+
+### 自動アンインストール
+
+```bash
+curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-uninstall.sh | bash
 ```
 
 ## 使用方法

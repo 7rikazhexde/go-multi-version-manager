@@ -3,18 +3,39 @@
 
 set -e
 
+# 自動モードかどうかを確認
+AUTO_MODE=0
+if [ "$1" = "-y" ] || [ "$1" = "--yes" ]; then
+  AUTO_MODE=1
+fi
+
+# curl | bash で実行された場合のディレクトリ処理
+if [ -z "${BASH_SOURCE[0]}" ] || [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  # スクリプトがパイプから実行された場合、一時ディレクトリを作成
+  if [ -t 0 ]; then
+    # 通常の実行
+    :
+  else
+    # パイプからの実行
+    TMP_DIR=$(mktemp -d)
+    cd "$TMP_DIR"
+    trap 'cd - > /dev/null; rm -rf "$TMP_DIR"' EXIT
+    AUTO_MODE=1
+  fi
+fi
+
 echo "==== Go Multi Version Manager (gomvm) インストーラー ===="
 echo ""
 
-# 環境変数から、またはデフォルト値を設定
-DEFAULT_INSTALL_DIR="${GOMVM_INSTALL_DIR:-${HOME}/go-multi-version-manager}"
+# リポジトリのクローン先を指定
+INSTALL_DIR="${HOME}/golang/go-multi-version-manager"
 
-# インストール先を常に確認
-read -r -p "インストール先 [$DEFAULT_INSTALL_DIR]: " custom_dir
-if [ -n "$custom_dir" ]; then
-  INSTALL_DIR="$custom_dir"
-else
-  INSTALL_DIR="$DEFAULT_INSTALL_DIR"
+# 自動モードでない場合、インストール先を確認
+if [ $AUTO_MODE -eq 0 ]; then
+  read -r -p "インストール先 [$INSTALL_DIR]: " custom_dir
+  if [ -n "$custom_dir" ]; then
+    INSTALL_DIR="$custom_dir"
+  fi
 fi
 
 # ディレクトリを作成

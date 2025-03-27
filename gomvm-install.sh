@@ -21,8 +21,9 @@ echo "==== Go Multi Version Manager (gomvm) インストーラー ===="
 echo ""
 
 # インストール先をユーザーに必ず指定させる
+# パイプ経由でも端末から入力を受け取るために /dev/tty を使用
 while true; do
-  read -r -p "インストール先を指定してください（例: /home/user/golang）: " INSTALL_DIR
+  read -r -p "インストール先を指定してください（例: /home/user/golang）: " INSTALL_DIR < /dev/tty
   if [ -n "$INSTALL_DIR" ]; then
     break
   else
@@ -32,6 +33,12 @@ done
 
 # ユーザーが指定したパスに "go-multi-version-manager" を追加
 INSTALL_DIR="${INSTALL_DIR}/go-multi-version-manager"
+
+# INSTALL_DIR が空でないことを確認
+if [ -z "$INSTALL_DIR" ]; then
+  echo "エラー: インストール先が設定されていません。処理を中止します。"
+  exit 1
+fi
 
 # ディレクトリを作成
 mkdir -p "$(dirname "$INSTALL_DIR")"

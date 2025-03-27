@@ -3,14 +3,39 @@
 
 set -e
 
+# 自動モードかどうかを確認
+AUTO_MODE=0
+if [ "$1" = "-y" ] || [ "$1" = "--yes" ]; then
+  AUTO_MODE=1
+fi
+
+# curl | bash で実行された場合のディレクトリ処理
+if [ -z "${BASH_SOURCE[0]}" ] || [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  # スクリプトがパイプから実行された場合、一時ディレクトリを作成
+  if [ -t 0 ]; then
+    # 通常の実行
+    :
+  else
+    # パイプからの実行
+    TMP_DIR=$(mktemp -d)
+    cd "$TMP_DIR"
+    trap 'cd - > /dev/null; rm -rf "$TMP_DIR"' EXIT
+    AUTO_MODE=1
+  fi
+fi
+
 echo "==== Go Multi Version Manager (gomvm) インストーラー ===="
 echo ""
 
 # リポジトリのクローン先を指定
 INSTALL_DIR="${HOME}/golang/go-multi-version-manager"
-read -r -p "インストール先 [$INSTALL_DIR]: " custom_dir
-if [ -n "$custom_dir" ]; then
-  INSTALL_DIR="$custom_dir"
+
+# 自動モードでない場合、インストール先を確認
+if [ $AUTO_MODE -eq 0 ]; then
+  read -r -p "インストール先 [$INSTALL_DIR]: " custom_dir
+  if [ -n "$custom_dir" ]; then
+    INSTALL_DIR="$custom_dir"
+  fi
 fi
 
 # ディレクトリを作成
@@ -269,7 +294,8 @@ case "$1" in
     echo ""
     echo "gomvm has been set up successfully!"
     echo "You can now use 'gomvm' from anywhere."
-    echo "To switch Go versions, use: source gomvm switch 1.24.0"
+    echo "To switch Go versions, use: source gomvm switch <version>"
+    echo "Example: source gomvm switch 1.24.0"
     echo "Current scripts directory: $SCRIPT_DIR"
     ;;
   
@@ -332,7 +358,8 @@ echo "==== インストール完了 ===="
 echo "使用例:"
 echo "  gomvm list               - 利用可能なGoバージョンを一覧表示"
 echo "  gomvm install 1.24.1     - Go 1.24.1をインストール" 
-echo "  source gomvm switch 1.24.1 - Go 1.24.1に切り替え"
+echo "  source gomvm switch <version> - 指定したGoバージョンに切り替え"
 echo "  gomvm installed          - インストール済みのGoバージョンを表示"
 echo ""
-echo "インストール完了しました。"
+echo "インストール完了しました。次のコマンドを実行して設定を反映してください："
+echo "  source ~/.bashrc"

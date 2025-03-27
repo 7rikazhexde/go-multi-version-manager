@@ -3,10 +3,10 @@
 
 set -e
 
-# 自動モードかどうかを確認
-AUTO_MODE=0
+# 自動確認モードかどうかを確認（インストール先は常に確認）
+AUTO_CONFIRM=0
 if [ "$1" = "-y" ] || [ "$1" = "--yes" ]; then
-  AUTO_MODE=1
+  AUTO_CONFIRM=1
 fi
 
 # curl | bash で実行された場合のディレクトリ処理
@@ -20,22 +20,21 @@ if [ -z "${BASH_SOURCE[0]}" ] || [ "${BASH_SOURCE[0]}" = "$0" ]; then
     TMP_DIR=$(mktemp -d)
     cd "$TMP_DIR"
     trap 'cd - > /dev/null; rm -rf "$TMP_DIR"' EXIT
-    AUTO_MODE=1
   fi
 fi
 
 echo "==== Go Multi Version Manager (gomvm) インストーラー ===="
 echo ""
 
-# リポジトリのクローン先を指定
-INSTALL_DIR="${HOME}/golang/go-multi-version-manager"
+# 環境変数から、またはデフォルト値を設定
+DEFAULT_INSTALL_DIR="${GOMVM_INSTALL_DIR:-${HOME}/go-multi-version-manager}"
 
-# 自動モードでない場合、インストール先を確認
-if [ $AUTO_MODE -eq 0 ]; then
-  read -r -p "インストール先 [$INSTALL_DIR]: " custom_dir
-  if [ -n "$custom_dir" ]; then
-    INSTALL_DIR="$custom_dir"
-  fi
+# インストール先は常に確認（-yオプションでも）
+read -r -p "インストール先 [$DEFAULT_INSTALL_DIR]: " custom_dir
+if [ -n "$custom_dir" ]; then
+  INSTALL_DIR="$custom_dir"
+else
+  INSTALL_DIR="$DEFAULT_INSTALL_DIR"
 fi
 
 # ディレクトリを作成
@@ -348,6 +347,15 @@ EOF
 
 # スクリプトに実行権限を付与
 chmod +x gomvm
+
+# セットアップの確認
+if [ "$AUTO_CONFIRM" -eq 0 ]; then
+  read -r -p "gomvm のセットアップを実行しますか? (Y/n): " setup_confirm
+  if [[ "$setup_confirm" =~ ^[Nn]$ ]]; then
+    echo "セットアップをスキップします。必要なときに $INSTALL_DIR/gomvm setup を実行してください。"
+    exit 0
+  fi
+fi
 
 # セットアップを実行
 echo "gomvm のセットアップを実行しています..."

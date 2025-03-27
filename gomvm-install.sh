@@ -3,12 +3,6 @@
 
 set -e
 
-# 自動モードかどうかを確認
-AUTO_MODE=0
-if [ "$1" = "-y" ] || [ "$1" = "--yes" ]; then
-  AUTO_MODE=1
-fi
-
 # curl | bash で実行された場合のディレクトリ処理
 if [ -z "${BASH_SOURCE[0]}" ] || [ "${BASH_SOURCE[0]}" = "$0" ]; then
   # スクリプトがパイプから実行された場合、一時ディレクトリを作成
@@ -20,23 +14,24 @@ if [ -z "${BASH_SOURCE[0]}" ] || [ "${BASH_SOURCE[0]}" = "$0" ]; then
     TMP_DIR=$(mktemp -d)
     cd "$TMP_DIR"
     trap 'cd - > /dev/null; rm -rf "$TMP_DIR"' EXIT
-    AUTO_MODE=1
   fi
 fi
 
 echo "==== Go Multi Version Manager (gomvm) インストーラー ===="
 echo ""
 
-# リポジトリのクローン先を指定
-INSTALL_DIR="${HOME}/golang/go-multi-version-manager"
-
-# 自動モードでない場合、インストール先を確認
-if [ $AUTO_MODE -eq 0 ]; then
-  read -r -p "インストール先 [$INSTALL_DIR]: " custom_dir
-  if [ -n "$custom_dir" ]; then
-    INSTALL_DIR="$custom_dir"
+# インストール先をユーザーに必ず指定させる
+while true; do
+  read -r -p "インストール先を指定してください（例: /home/user/golang）: " INSTALL_DIR
+  if [ -n "$INSTALL_DIR" ]; then
+    break
+  else
+    echo "エラー: インストール先を指定する必要があります。"
   fi
-fi
+done
+
+# ユーザーが指定したパスに "go-multi-version-manager" を追加
+INSTALL_DIR="${INSTALL_DIR}/go-multi-version-manager"
 
 # ディレクトリを作成
 mkdir -p "$(dirname "$INSTALL_DIR")"

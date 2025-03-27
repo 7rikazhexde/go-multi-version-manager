@@ -13,6 +13,7 @@ English | [日本語](README_ja.md)
   - [Installation](#installation)
     - [Automatic Installation](#automatic-installation)
     - [Manual Installation](#manual-installation)
+    - [Automatic Uninstallation](#automatic-uninstallation)
   - [Usage](#usage)
     - [Basic Commands](#basic-commands)
     - [Switching Go Versions](#switching-go-versions)
@@ -75,6 +76,12 @@ cd go-multi-version-manager
 
 # Load updated PATH settings
 source ~/.bashrc
+```
+
+### Automatic Uninstallation
+
+```bash
+curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-uninstall.sh | bash
 ```
 
 ## Usage

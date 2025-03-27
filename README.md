@@ -9,6 +9,7 @@ English | [日本語](README_ja.md)
 - [go-multi-version-manager](#go-multi-version-manager)
   - [Table of Contents](#table-of-contents)
   - [Notes](#notes)
+  - [Prerequisite](#prerequisite)
   - [Installation](#installation)
     - [Automatic Installation](#automatic-installation)
     - [Manual Installation](#manual-installation)
@@ -34,6 +35,18 @@ English | [日本語](README_ja.md)
 
 [^1]: `export PATH=/usr/local/go/bin:$PATH`
 
+## Prerequisite
+
+You must have set the `go` path in `~/.bashrc`.
+
+```bash
+## Go
+# Default Go configuration (e.g. /usr/local/go/bin)
+export PATH=/usr/local/go/bin:$PATH
+# Path setting for Go tools
+export PATH=$HOME/go/bin:$PATH
+```
+
 ## Installation
 
 ### Automatic Installation
@@ -42,9 +55,7 @@ The easiest way to set up go-multi-version-manager is using the installer script
 
 ```bash
 # Download and run the installer script
-curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh -o gomvm-install.sh
-chmod +x gomvm-install.sh
-./gomvm-install.sh
+curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh | bash
 
 # Load updated PATH settings
 source ~/.bashrc

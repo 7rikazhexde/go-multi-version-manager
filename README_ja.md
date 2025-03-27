@@ -9,6 +9,7 @@
 - [go-multi-version-manager](#go-multi-version-manager)
   - [目次](#目次)
   - [注意事項](#注意事項)
+  - [前提条件](#前提条件)
   - [インストール方法](#インストール方法)
     - [自動インストール](#自動インストール)
     - [手動インストール](#手動インストール)
@@ -34,17 +35,27 @@
 
 [^1]: `export PATH=/usr/local/go/bin:$PATH`
 
+## 前提条件
+
+`~/.bashrc`で`go`のパス設定済みであること。
+
+```bash
+# Go
+# Goのデフォルト設定（例: /usr/local/go/bin）
+export PATH=/usr/local/go/bin:$PATH
+# Goツール用のパス設定
+export PATH=$HOME/go/bin:$PATH
+```
+
 ## インストール方法
 
 ### 自動インストール
 
-go-multi-version-managerを設定する最も簡単な方法は、インストーラースクリプトを使用することです：
+インストーラースクリプトを使用してリポジトリのcloneと
 
 ```bash
 # インストーラースクリプトをダウンロードして実行
-curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh -o gomvm-install.sh
-chmod +x gomvm-install.sh
-./gomvm-install.sh
+curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh | bash
 
 # PATH設定を更新
 source ~/.bashrc

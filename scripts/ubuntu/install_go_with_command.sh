@@ -41,4 +41,4 @@ go"${GO_VERSION}" download
 
 # Installation success message with instructions
 echo "Go $GO_VERSION has been installed successfully."
-echo "To set up the environment variables for Go $GO_VERSION, please run 'source ./switch_go_version.sh ${GO_VERSION}' in the ubuntu directory."
+echo "To set up the environment variables for Go $GO_VERSION, please run 'source gomvm switch ${GO_VERSION}' in the ubuntu directory."

@@ -23,7 +23,7 @@ if [ -f "${GO_BINARY}" ]; then
     echo "Go version ${GO_VERSION} has been removed from ${HOME}/go/bin."
 
     # Display message to update PATH
-    echo "Please run 'source ~/.bashrc' or use 'switch_go_version.sh <go_version>' to update your Go version."
+    echo "Please run 'source ~/.bashrc' or use 'source gomvm switch <go_version>' to update your Go version."
   else
     echo "Uninstallation aborted."
   fi

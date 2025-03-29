@@ -3,36 +3,6 @@
 
 set -e
 
-# 色の定義
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
-
-# メッセージ表示のヘルパー関数
-print_info() {
-  echo -e "${BLUE}ℹ️ $1${NC}"
-}
-
-print_success() {
-  echo -e "${GREEN}✅ $1${NC}"
-}
-
-print_warning() {
-  echo -e "${YELLOW}⚠️ $1${NC}"
-}
-
-print_error() {
-  echo -e "${RED}❌ $1${NC}"
-}
-
-print_header() {
-  echo -e "${BOLD}${BLUE}$1${NC}"
-}
-
 # curl | bash で実行された場合のディレクトリ処理
 if [ -z "${BASH_SOURCE[0]}" ] || [ "${BASH_SOURCE[0]}" = "$0" ]; then
   # スクリプトがパイプから実行された場合、一時ディレクトリを作成
@@ -47,12 +17,32 @@ if [ -z "${BASH_SOURCE[0]}" ] || [ "${BASH_SOURCE[0]}" = "$0" ]; then
   fi
 fi
 
-print_header "==== Go Multi Version Manager (gomvm) インストーラー ===="
+# カラーコードを省略したシンプルな表示関数
+print_header() {
+  echo "==== $1 ===="
+}
+
+print_info() {
+  echo "ℹ️ $1"
+}
+
+print_success() {
+  echo "✅ $1"
+}
+
+print_warning() {
+  echo "⚠️ $1"
+}
+
+print_error() {
+  echo "❌ $1"
+}
+
+print_header "Go Multi Version Manager (gomvm) インストーラー"
 echo ""
 
 # インストール先をユーザーに必ず指定させる
 # パイプ経由でも端末から入力を受け取るために /dev/tty を使用
-# カラーコードを使わずに直接プロンプトを表示
 while true; do
   echo -n "📂 インストール先を指定してください（例: $HOME/golang）: "
   read -r INSTALL_DIR < /dev/tty
@@ -101,13 +91,13 @@ print_info "gomvm のセットアップを実行しています..."
 ./gomvm setup
 
 echo ""
-print_header "==== インストール完了 ===="
+print_header "インストール完了"
 print_info "使用例:"
-echo "  ${CYAN}gomvm list${NC}                    - 利用可能なGoバージョンを一覧表示"
-echo "  ${CYAN}gomvm install 1.24.1${NC}          - Go 1.24.1をインストール" 
-echo "  ${CYAN}source gomvm switch <version>${NC} - 指定したGoバージョンに切り替え"
-echo "  ${CYAN}gomvm installed${NC}               - インストール済みのGoバージョンを表示"
+echo "  gomvm list                    - 利用可能なGoバージョンを一覧表示"
+echo "  gomvm install 1.24.1          - Go 1.24.1をインストール" 
+echo "  source gomvm switch <version> - 指定したGoバージョンに切り替え"
+echo "  gomvm installed               - インストール済みのGoバージョンを表示"
 echo ""
 print_success "インストールが完了しました！"
 print_info "次のコマンドを実行して設定を反映してください："
-echo "  ${CYAN}source ~/.bashrc${NC}"
+echo "  source ~/.bashrc"

@@ -3,38 +3,28 @@
 
 set -e
 
-# 色の定義
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
+# カラーコードを省略したシンプルな表示関数
+print_header() {
+  echo "==== $1 ===="
+}
 
-# メッセージ表示のヘルパー関数
 print_info() {
-  echo -e "${BLUE}ℹ️ $1${NC}"
+  echo "ℹ️ $1"
 }
 
 print_success() {
-  echo -e "${GREEN}✅ $1${NC}"
+  echo "✅ $1"
 }
 
 print_warning() {
-  echo -e "${YELLOW}⚠️ $1${NC}"
+  echo "⚠️ $1"
 }
 
 print_error() {
-  echo -e "${RED}❌ $1${NC}"
+  echo "❌ $1"
 }
 
-print_header() {
-  echo -e "${BOLD}${PURPLE}$1${NC}"
-}
-
-print_header "==== Go Multi Version Manager (gomvm) アンインストーラー ===="
+print_header "Go Multi Version Manager (gomvm) アンインストーラー"
 echo ""
 
 # gomvm の構成ディレクトリとバイナリのパス
@@ -58,7 +48,8 @@ fi
 # INSTALL_DIR が未定義の場合、ユーザーに手動で指定させる
 if [ -z "$INSTALL_DIR" ]; then
   while true; do
-    read -r -p "📂 削除する gomvm のインストール先を指定してください（例: ${CYAN}$HOME/golang${NC}）: " INSTALL_DIR < /dev/tty
+    echo -n "📂 削除する gomvm のインストール先を指定してください（例: $HOME/golang）: "
+    read -r INSTALL_DIR < /dev/tty
     if [ -n "$INSTALL_DIR" ]; then
       break
     else
@@ -109,17 +100,17 @@ else
 fi
 
 echo ""
-print_header "==== アンインストール完了 ===="
+print_header "アンインストール完了"
 print_success "gomvm がシステムから削除されました。"
 print_warning "注: Go のバージョン自体（例: $HOME/go/bin/ 内のファイル）は削除されていません。"
 print_info "必要に応じて手動で削除してください。"
 echo ""
 print_info "再インストールする場合は、以下のように実行してください："
-echo -e "  ${CYAN}curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh | bash${NC}"
+echo "  curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh | bash"
 echo ""
 print_info "スクリプトディレクトリが見つからない場合の対処法（必要に応じて）:"
-echo -e "  ${CYAN}export GOMVM_SCRIPTS_DIR=/path/to/go-multi-version-manager/scripts/ubuntu${NC}"
+echo "  export GOMVM_SCRIPTS_DIR=/path/to/go-multi-version-manager/scripts/ubuntu"
 print_info "現在のシェルセッションに設定を反映するには、次のコマンドを実行してください："
-echo -e "  ${CYAN}source ~/.bashrc${NC}"
+echo "  source ~/.bashrc"
 
 exit 0

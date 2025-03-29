@@ -4,5 +4,6 @@
         // Explorer determines which files and folders to show or hide based on this setting. (true is hidden)
         // Show .git folders (hidden by default)
         "**/.git": false
-    }
+    },
+    "files.insertFinalNewline": true
 }

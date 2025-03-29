@@ -38,9 +38,10 @@ English | [日本語](README_ja.md)
 
 ## 📋 Prerequisite
 
-Please add the following Go environment configuration to your `~/.bashrc` file for gomvm to work properly.
+> [!IMPORTANT]
+> Add the following Go environment configuration to your `~/.bashrc` file for gomvm to work properly. For more details, see [Go Environment Variables and PATH Configuration Guide](docs/go-environment-settings.md).
 
-The following functions are enabled by the configulation:
+This configuration enables:
 
 - ✅ Version persistence across shell sessions
 - ✅ Automatic version selection based on your saved preferences
@@ -88,6 +89,12 @@ else
   export PATH="$HOME/go/bin:$PATH"
 fi
 ```
+
+> [!NOTE]
+> After adding this configuration, reload your shell settings with `source ~/.bashrc` for changes to take effect.
+
+> [!TIP]
+> If you need more details about how gomvm manages Go environment variables and PATH settings, check the [Go Environment Variables and PATH Configuration Guide](docs/go-environment-settings.md).
 
 ## 📥 Installation
 

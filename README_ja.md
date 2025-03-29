@@ -38,9 +38,10 @@
 
 ## 📋 前提条件
 
-gomvmが使用するために`~/.bashrc`に以下のGo環境設定を追記してください。
+> [!IMPORTANT]
+> gomvmを正常に動作させるには、以下のGo環境設定を`~/.bashrc`ファイルに追加してください。詳細については、[Go環境変数とPATH設定ガイド](docs/go-environment-settings_ja.md)を参照してください。
 
-設定により以下の機能が有効になります。
+この設定により以下の機能が有効になります。
 
 - ✅ シェルセッション間でのバージョン永続化
 - ✅ 保存された設定に基づく自動バージョン選択
@@ -88,6 +89,12 @@ else
   export PATH="$HOME/go/bin:$PATH"
 fi
 ```
+
+> [!NOTE]
+> この設定を追加した後、`source ~/.bashrc`を実行してシェル設定を再読み込みし、変更を反映させてください。
+
+> [!TIP]
+> gomvmがGoの環境変数とPATH設定をどのように管理するかについての詳細は、[Go環境変数とPATH設定ガイド](docs/go-environment-settings_ja.md)を確認してください。
 
 ## 📥 インストール方法
 

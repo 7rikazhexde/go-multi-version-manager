@@ -14,9 +14,6 @@ English | [日本語](README_ja.md)
     - [Automatic Installation](#automatic-installation)
     - [Manual Installation](#manual-installation)
     - [Automatic Uninstallation](#automatic-uninstallation)
-  - [Configuration](#configuration)
-    - [Manual .bashrc Configuration](#manual-bashrc-configuration)
-    - [Understanding the Configuration](#understanding-the-configuration)
   - [Usage](#usage)
     - [Basic Commands](#basic-commands)
     - [Switching Go Versions](#switching-go-versions)
@@ -41,14 +38,55 @@ English | [日本語](README_ja.md)
 
 ## Prerequisite
 
-You must have the Go path set in `~/.bashrc`. A basic configuration looks like this:
+Please ddd the following Go environment configuration to your `~/.bashrc` file for gomvm to work properly.
+
+The following functions are enabled by the configulation:
+
+- Version persistence across shell sessions
+- Automatic version selection based on your saved preferences
+- Optional latest version checking (disabled by default)
 
 ```bash
-## Go
-# Default Go configuration
-export PATH=/usr/local/go/bin:$PATH
-# Path setting for Go tools
-export PATH=$HOME/go/bin:$PATH
+# Go environment setup - conditional based on gomvm presence
+if command -v gomvm &> /dev/null || [ -f "$HOME/.config/gomvm/config" ]; then
+  # gomvm exists - use advanced version management
+  
+  # Check for persisted version selection
+  GO_SELECTED_VERSION_FILE="$HOME/.go_selected_version"
+  if [ -f "$GO_SELECTED_VERSION_FILE" ] && [ -s "$GO_SELECTED_VERSION_FILE" ]; then
+    GO_VERSION=$(cat "$GO_SELECTED_VERSION_FILE")
+    if [ -x "$HOME/go/bin/go$GO_VERSION" ]; then
+      # Set GOROOT for the selected version
+      export GOROOT=$("$HOME/go/bin/go$GO_VERSION" env GOROOT)
+      # Update PATH (prioritize selected version)
+      export PATH="$GOROOT/bin:$HOME/go/bin:$PATH"
+    else
+      # Default settings if selected version not found
+      export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
+    fi
+  else
+    # Default settings if no version selection file
+    export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
+  fi
+  
+  # Latest version check (disabled by default)
+  # To enable automatic version checking, uncomment the source line below
+  if [ -f "$HOME/.config/gomvm/config" ]; then
+    source "$HOME/.config/gomvm/config"
+    if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
+      INSTALL_DIR=$(dirname "$(dirname "$GOMVM_SCRIPTS_DIR")")
+      SCRIPT_PATH="$INSTALL_DIR/check_latest_go.sh"
+      if [ -f "$SCRIPT_PATH" ]; then
+        # source "$SCRIPT_PATH"  # Uncomment this line to enable automatic version checking
+        :  # No-op placeholder
+      fi
+    fi
+  fi
+else
+  # gomvm not present - use standard Go settings only
+  export PATH="/usr/local/go/bin:$PATH"
+  export PATH="$HOME/go/bin:$PATH"
+fi
 ```
 
 ## Installation
@@ -106,72 +144,6 @@ This uninstallation script performs the following actions.
 > 1. Go versions in `$HOME/go/bin/`
 > 2. The default Go installation in `/usr/local/go`
 
-## Configuration
-
-### Manual .bashrc Configuration
-
-After installing gomvm, you need to add the following configuration to your `~/.bashrc` file to enable version persistence and other advanced features. Open your `.bashrc` file and add the following code:
-
-```bash
-# Go environment setup - conditional based on gomvm presence
-if command -v gomvm &> /dev/null || [ -f "$HOME/.config/gomvm/config" ]; then
-  # gomvm exists - use advanced version management
-  
-  # Check for persisted version selection
-  GO_SELECTED_VERSION_FILE="$HOME/.go_selected_version"
-  if [ -f "$GO_SELECTED_VERSION_FILE" ] && [ -s "$GO_SELECTED_VERSION_FILE" ]; then
-    GO_VERSION=$(cat "$GO_SELECTED_VERSION_FILE")
-    if [ -x "$HOME/go/bin/go$GO_VERSION" ]; then
-      # Set GOROOT for the selected version
-      export GOROOT=$("$HOME/go/bin/go$GO_VERSION" env GOROOT)
-      # Update PATH (prioritize selected version)
-      export PATH="$GOROOT/bin:$HOME/go/bin:$PATH"
-    else
-      # Default settings if selected version not found
-      export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
-    fi
-  else
-    # Default settings if no version selection file
-    export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
-  fi
-  
-  # Latest version check (disabled by default)
-  # To enable automatic version checking, uncomment the source line below
-  if [ -f "$HOME/.config/gomvm/config" ]; then
-    source "$HOME/.config/gomvm/config"
-    if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
-      INSTALL_DIR=$(dirname "$(dirname "$GOMVM_SCRIPTS_DIR")")
-      SCRIPT_PATH="$INSTALL_DIR/check_latest_go.sh"
-      if [ -f "$SCRIPT_PATH" ]; then
-        # source "$SCRIPT_PATH"  # Uncomment this line to enable automatic version checking
-        :  # No-op placeholder
-      fi
-    fi
-  fi
-else
-  # gomvm not present - use standard Go settings only
-  export PATH="/usr/local/go/bin:$PATH"
-  export PATH="$HOME/go/bin:$PATH"
-fi
-```
-
-After adding this configuration, reload your `.bashrc`:
-
-```bash
-source ~/.bashrc
-```
-
-### Understanding the Configuration
-
-The added configuration performs several important functions:
-
-1. **Conditional Execution**: Only activates advanced features if gomvm is installed
-2. **Version Persistence**: Reads the previously selected Go version from a file and sets it as the active version
-3. **Fallback Mechanism**: Uses the system default Go if the selected version is not available
-4. **Optional Latest Version Check**: Can be enabled to automatically check for new Go versions (commented out by default)
-
-If gomvm is not installed, the configuration simply applies standard Go path settings.
-
 ## Usage
 
 ### Basic Commands
@@ -222,7 +194,7 @@ The latest version check feature is disabled by default to avoid unnecessary net
 1. Edit your `~/.bashrc` file
 2. Find the line `# source "$SCRIPT_PATH"` in the gomvm configuration section
 3. Uncomment it by removing the `#` character
-4. Save the file and reload your `.bashrc`:
+4. Save the file and reload your `.bashrc`
 
    ```bash
    source ~/.bashrc

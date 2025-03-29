@@ -142,13 +142,18 @@ check_and_install_latest_go() {
     print_error "最新バージョンの取得に失敗しました"
     return 1
   fi
-  # SC2001: sedの代わりにbash変数置換を使用
   VERSION_NUM=${LATEST_VERSION#go}
   
-  # 修正: 任意の場所にインストールされているかをチェック
+  # 任意の場所にインストールされているかをチェック
   if is_go_version_installed "$VERSION_NUM"; then
     print_success "最新バージョン ($LATEST_VERSION) はすでにシステム上にインストールされています"
-    print_info "'${CYAN}gomvm installed${NC}' コマンドで詳細を確認できます"
+    # 現在のgoコマンドのバージョン情報を取得
+    current_go_version=$(go version)
+    current_go_path=$(which go)
+
+    print_info "現在使用中のGoバージョン: ${CYAN}${current_go_version}${NC}"
+    print_info "バイナリの場所: ${CYAN}${current_go_path}${NC}"
+    print_info "${CYAN}gomvm installed${NC} コマンドで詳細を確認できます"
     date +%s > "$TIMESTAMP_FILE"
     return 0
   fi
@@ -161,8 +166,6 @@ check_and_install_latest_go() {
       print_success "$LATEST_VERSION のインストールが完了しました"
       read -r -p "この最新バージョンをデフォルトに設定しますか？ (y/N): " set_default
       if [[ "$set_default" =~ ^[Yy]$ ]]; then
-        # SC1091: gomvmが外部コマンドであることを明示
-        # shellcheck source=/dev/null
         source "$(command -v gomvm)" switch "$VERSION_NUM"
         print_success "$LATEST_VERSION をデフォルトバージョンに設定しました"
       fi
@@ -178,7 +181,6 @@ check_and_install_latest_go() {
 }
 
 # 直接実行時はエラーで中断
-# SC2128: BASH_SOURCEは配列として扱う
 if [ "$0" = "${BASH_SOURCE[0]}" ]; then
   print_error "'source ./check_latest_go.sh [--force]' で実行してください"
   exit 1

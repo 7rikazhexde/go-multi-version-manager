@@ -166,6 +166,7 @@ check_and_install_latest_go() {
       print_success "$LATEST_VERSION のインストールが完了しました"
       read -r -p "この最新バージョンをデフォルトに設定しますか？ (y/N): " set_default
       if [[ "$set_default" =~ ^[Yy]$ ]]; then
+        # shellcheck disable=SC1090
         source "$(command -v gomvm)" switch "$VERSION_NUM"
         print_success "$LATEST_VERSION をデフォルトバージョンに設定しました"
       fi

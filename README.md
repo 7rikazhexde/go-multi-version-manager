@@ -1,6 +1,6 @@
 # go-multi-version-manager
 
-This repository contains scripts for managing, installing, and switching between multiple Go versions.
+A collection of scripts for managing, installing, and switching between multiple Go versions.
 
 English | [日本語](README_ja.md)
 
@@ -17,6 +17,7 @@ English | [日本語](README_ja.md)
   - [Usage](#usage)
     - [Basic Commands](#basic-commands)
     - [Switching Go Versions](#switching-go-versions)
+    - [Automatic Latest Version Check](#automatic-latest-version-check)
   - [Scripts](#scripts)
     - [install\_go\_replace\_default.sh](#install_go_replace_defaultsh)
     - [install\_go\_with\_command.sh](#install_go_with_commandsh)
@@ -29,20 +30,18 @@ English | [日本語](README_ja.md)
 
 ## Notes
 
-- These scripts are designed for **Ubuntu**; they are not guaranteed to work on **Mac** and **Windows**.
-- For the Go version managed by `install_go_with_command.sh`, make sure that `$HOME/go/bin` is included in your `PATH`[^1].
-- Check the installed version using `go version` and make sure it is set up correctly.
-- For a general Go installation guide, see [official Go documentation](https://go.dev/doc/install).
-
-[^1]: `export PATH=/usr/local/go/bin:$PATH`
+- These scripts are designed for **Ubuntu**; they are not supported on **Mac** and **Windows**
+- For Go versions managed by `install_go_with_command.sh`, ensure `$HOME/go/bin` is included in your `PATH`
+- Always verify installation with `go version` after setup
+- For general Go installation guidance, refer to the [official Go documentation](https://go.dev/doc/install)
 
 ## Prerequisite
 
-You must have set the `go` path in `~/.bashrc`.
+You must have the Go path set in `~/.bashrc`.
 
 ```bash
 ## Go
-# Default Go configuration (e.g. /usr/local/go/bin)
+# Default Go configuration
 export PATH=/usr/local/go/bin:$PATH
 # Path setting for Go tools
 export PATH=$HOME/go/bin:$PATH
@@ -52,7 +51,7 @@ export PATH=$HOME/go/bin:$PATH
 
 ### Automatic Installation
 
-The easiest way to set up go-multi-version-manager is using the installer script:
+The easiest way to set up go-multi-version-manager.
 
 ```bash
 # Download and run the installer script
@@ -64,7 +63,7 @@ source ~/.bashrc
 
 ### Manual Installation
 
-Alternatively, you can clone the repository and set it up manually:
+Alternatively, you can clone the repository and set it up manually.
 
 ```bash
 # Clone the repository
@@ -80,15 +79,34 @@ source ~/.bashrc
 
 ### Automatic Uninstallation
 
+To completely remove gomvm from your system, run the following command.
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-uninstall.sh | bash
 ```
+
+This uninstallation script performs the following actions.
+
+- Removes the gomvm repository directory from your system
+- Deletes the configuration directory (`~/.config/gomvm`)
+- Removes the gomvm binary from `~/.local/bin`
+
+> [!WARNING]
+> The uninstallation process does not remove the following.
+>
+> - Go versions installed in `$HOME/go/bin` (installed via `gomvm install`)
+> - Go versions installed in system directories (e.g., `/usr/local/go`)
+>
+> If you want to completely remove everything, you can manually delete the following.
+>
+> 1. Go versions in `$HOME/go/bin/`
+> 2. The default Go installation in `/usr/local/go`
 
 ## Usage
 
 ### Basic Commands
 
-After installation, you can use the following commands:
+After installation, you can use the following commands.
 
 ```bash
 # List available Go versions
@@ -106,7 +124,7 @@ gomvm uninstall 1.24.1
 
 ### Switching Go Versions
 
-To switch between installed Go versions, use the `source` command with `gomvm switch`:
+To switch between installed Go versions.
 
 ```bash
 # Switch to Go 1.24.1
@@ -116,79 +134,87 @@ source gomvm switch 1.24.1
 > [!IMPORTANT]
 > Always use the `source` command with `switch` to make the changes take effect in your current shell.
 
-## Scripts
+### Automatic Latest Version Check
 
-The following scripts are used internally by the `gomvm` command, but can also be used directly if needed:
+Add the following to your `~/.bashrc` to automatically check for the latest Go version.
+
+```bash
+# Check for latest Go version (dynamic path detection)
+if [ -f "$HOME/.config/gomvm/config" ]; then
+  # shellcheck source=/dev/null
+  source "$HOME/.config/gomvm/config"
+  if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
+    INSTALL_DIR=$(dirname "$(dirname "$GOMVM_SCRIPTS_DIR")")
+    SCRIPT_PATH="$INSTALL_DIR/check_latest_go.sh"
+    if [ -f "$SCRIPT_PATH" ]; then
+      source "$SCRIPT_PATH"
+    fi
+  fi
+fi
+```
+
+This feature
+
+- Checks for the latest Go version at login
+- Only checks once per 24 hours to avoid excessive network requests
+- Suggests installation if the latest version isn't installed
+- Can be forced to check using the `--force` option, ignoring the 24-hour rule
+
+## Scripts
 
 ### install_go_replace_default.sh
 
 Installs the default version of Go in `/usr/local/go`, replacing any existing version.
 
-Usage
+Usage:
 
 ```bash
-./install_go_replace_default.sh <go_version>
+./install_go_replace_default.sh 1.23.2
 ```
 
-- Example: `./install_go_replace_default.sh 1.23.2`
-
 The script will prompt you to confirm the deletion of `/usr/local/go` if it already exists, and then install the specified version.
-
----
 
 ### install_go_with_command.sh
 
 Installs Go using the `go install` command, allowing multiple versions to be installed in `${HOME}/go/bin`.
 
-Usage
+Usage:
 
 ```bash
-./install_go_with_command.sh <go_version>
+./install_go_with_command.sh 1.23.1
 ```
 
-- Example: `./install_go_with_command.sh 1.23.1`
-
-The script installs the specified version using `go install` and places it in `${HOME}/go/bin/go<version>`.
-
----
+The script installs the specified version and places it in `${HOME}/go/bin/go<version>`.
 
 ### install_go_specific.sh
 
 Installs a specific version of Go in `/usr/local/go<version>`. If the specified version is already installed, it will be skipped.
 
-Usage
+Usage:
 
 ```bash
-./install_go_specific.sh <go_version>
+./install_go_specific.sh 1.23.0
 ```
-
-- Example: `./install_go_specific.sh 1.23.0`
 
 This script allows for multiple versions to be installed in separate directories.
 
----
-
 ### switch_go_version.sh
 
-Switches to a specified Go version. Run this script with source to use the specified Go version in the current shell session. If the specified Go version is not installed, this script will execute install_go_with_command.sh internally to install it.
+Switches to a specified Go version. Run this script with `source` to use the specified Go version in the current shell session. If the specified Go version is not installed, this script will automatically install it.
 
-Usage
+Usage:
 
 ```bash
-source ./switch_go_version.sh <go_version>
+source ./switch_go_version.sh 1.23.0
 ```
 
-- Example: `source ./switch_go_version.sh 1.23.0`
-
 To return to the default version set in `.bashrc`, run `source ~/.bashrc`.
-
----
 
 ### list_go_versions.sh
 
 Fetches a list of available Go versions from the official download page.
 
-Usage
+Usage:
 
 ```bash
 ./list_go_versions.sh
@@ -196,39 +222,31 @@ Usage
 
 This script retrieves all available versions from the [Go download page](https://go.dev/dl/) and displays them.
 
----
-
 ## Developer Options
 
 ### Setting Up Pre-commit Hook for Shell Scripts
 
-To help maintain code quality, you can set up a `pre-commit` hook that automatically runs `shellcheck` on all shell scripts before each commit. This will prevent commits if `shellcheck` finds any issues, ensuring that only error-free scripts are committed.
+To help maintain code quality, you can set up a `pre-commit` hook that automatically runs `shellcheck` on all shell scripts before each commit.
 
 ### Steps to Set Up Pre-commit Hook
 
 1. Install `shellcheck`
 
-  Make sure `shellcheck` is installed on your system. If it is not installed, use the following command to install it.
+   ```bash
+   sudo apt install shellcheck
+   ```
 
-  ```bash
-  sudo apt install shellcheck
-  ```
+2. Add Execution Permission
 
-1. Add Execution Permission
+   ```bash
+   chmod +x scripts/ci/create_pre-commit.sh
+   ```
 
-  First, make sure the `create_pre-commit.sh` script has execution permission:
+3. Run the Create Pre-commit Script
 
-  ```bash
-  chmod +x scripts/ci/create_pre-commit.sh
-  ```
+   ```bash
+   ./scripts/ci/create_pre-commit.sh
+   ```
 
-1. Run the `create_pre-commit.sh` script
-
-  Execute the following command from the root directory of the project to set up the `pre-commit` hook
-
-  ```bash
-  ./scripts/ci/create_pre-commit.sh
-  ```
-
-  This will create a `pre-commit` hook under `.git/hooks/`. The hook will automatically execute `shellcheck` on all `.sh` files located in `scripts/ubuntu` each time a commit is attempted.  
-  If you want to run the `pre-commit` hook manually before committing, run `.git/hooks/pre-commit`.
+This will create a `pre-commit` hook under `.git/hooks/` that will automatically check all `.sh` files in `scripts/ubuntu` before each commit.
+To run the pre-commit hook manually, execute `.git/hooks/pre-commit`.

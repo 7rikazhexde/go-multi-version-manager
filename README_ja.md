@@ -14,10 +14,13 @@
     - [自動インストール](#自動インストール)
     - [手動インストール](#手動インストール)
     - [自動アンインストール](#自動アンインストール)
+  - [設定](#設定)
+    - [.bashrcへの手動設定](#bashrcへの手動設定)
+    - [設定の理解](#設定の理解)
   - [使用方法](#使用方法)
     - [基本コマンド](#基本コマンド)
     - [Goバージョンの切り替え](#goバージョンの切り替え)
-    - [最新バージョンの自動チェック](#最新バージョンの自動チェック)
+    - [最新バージョンチェックの有効化](#最新バージョンチェックの有効化)
   - [スクリプト詳細](#スクリプト詳細)
     - [install\_go\_replace\_default.sh](#install_go_replace_defaultsh)
     - [install\_go\_with\_command.sh](#install_go_with_commandsh)
@@ -33,11 +36,12 @@
 - スクリプトは**Ubuntu**向けに設計されており、**Mac**と**Windows**ではサポートしていません
 - `install_go_with_command.sh`で管理するGoバージョンについては、`$HOME/go/bin`が`PATH`に含まれていることを確認してください
 - インストール後は`go version`を使用して、正しくセットアップされたことを確認してください
+- `gomvm switch`を使用してGoバージョンを切り替えると、選択したバージョンはシェルセッション間や`.bashrc`の再読み込み後も保持されます
 - 一般的なGoのインストール方法については、[公式Goドキュメント](https://go.dev/doc/install)を参照してください
 
 ## 前提条件
 
-`~/.bashrc`にGoのパス設定が必要です。
+`~/.bashrc`にGoのパス設定が必要です。基本的な設定は以下のようになります：
 
 ```bash
 # Go
@@ -100,6 +104,72 @@ curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager
 > 1. `$HOME/go/bin/`内のGoバージョン
 > 2. `/usr/local/go`のデフォルトGoインストール
 
+## 設定
+
+### .bashrcへの手動設定
+
+gomvmをインストールした後、バージョン永続化やその他の高度な機能を有効にするために、以下の設定を`~/.bashrc`ファイルに追加する必要があります。`.bashrc`ファイルを開いて、次のコードを追加してください：
+
+```bash
+# Go環境設定 - gomvmの有無で分岐
+if command -v gomvm &> /dev/null || [ -f "$HOME/.config/gomvm/config" ]; then
+  # gomvmが存在する場合の処理
+  
+  # バージョン永続化ファイルのチェック
+  GO_SELECTED_VERSION_FILE="$HOME/.go_selected_version"
+  if [ -f "$GO_SELECTED_VERSION_FILE" ] && [ -s "$GO_SELECTED_VERSION_FILE" ]; then
+    GO_VERSION=$(cat "$GO_SELECTED_VERSION_FILE")
+    if [ -x "$HOME/go/bin/go$GO_VERSION" ]; then
+      # 選択されたバージョンのGOROOTを設定
+      export GOROOT=$("$HOME/go/bin/go$GO_VERSION" env GOROOT)
+      # PATHを設定（選択バージョン優先）
+      export PATH="$GOROOT/bin:$HOME/go/bin:$PATH"
+    else
+      # 選択バージョンが見つからない場合はデフォルト設定
+      export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
+    fi
+  else
+    # 永続化ファイルがない場合はデフォルト設定
+    export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
+  fi
+  
+  # 最新バージョンチェック（デフォルトでは無効）
+  # 自動バージョンチェックを有効にするには、下記のsourceの行のコメントを解除してください
+  if [ -f "$HOME/.config/gomvm/config" ]; then
+    source "$HOME/.config/gomvm/config"
+    if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
+      INSTALL_DIR=$(dirname "$(dirname "$GOMVM_SCRIPTS_DIR")")
+      SCRIPT_PATH="$INSTALL_DIR/check_latest_go.sh"
+      if [ -f "$SCRIPT_PATH" ]; then
+        # source "$SCRIPT_PATH"  # この行のコメントを解除すると自動バージョンチェックが有効になります
+        :  # 何もしない（プレースホルダー）
+      fi
+    fi
+  fi
+else
+  # gomvmがない場合は標準的なGo設定のみを適用
+  export PATH="/usr/local/go/bin:$PATH"
+  export PATH="$HOME/go/bin:$PATH"
+fi
+```
+
+この設定を追加した後、`.bashrc`を再読み込みしてください。
+
+```bash
+source ~/.bashrc
+```
+
+### 設定の理解
+
+追加した設定は、以下の重要な機能を提供します：
+
+1. **条件付き実行**：gomvmがインストールされている場合のみ高度な機能を有効にします
+2. **バージョン永続化**：以前に選択したGoバージョンをファイルから読み取り、アクティブなバージョンとして設定します
+3. **フォールバックメカニズム**：選択したバージョンが利用できない場合、システムのデフォルトGoを使用します
+4. **任意の最新バージョンチェック**：新しいGoバージョンを自動的にチェックするよう設定できます（デフォルトではコメントアウト）
+
+gomvmがインストールされていない場合、この設定は単に標準的なGoパス設定を適用します。
+
 ## 使用方法
 
 ### 基本コマンド
@@ -129,34 +199,45 @@ gomvm uninstall 1.24.1
 source gomvm switch 1.24.1
 ```
 
+`switch`コマンドは以下の処理を行います。
+
+1. 現在のシェルセッションのGoバージョンを変更します
+2. バージョン設定をシェルセッション間で保持するために保存します
+3. `.bashrc`を再読み込みした後も選択したバージョンが有効なままであることを保証します
+
 > [!IMPORTANT]
 > 変更を現在のシェルに反映させるために、必ず`source`コマンドを使用してください。
 
-### 最新バージョンの自動チェック
+システムのデフォルトGoバージョンに戻したい場合は、以下のいずれかを実行できます。
 
-`~/.bashrc`に以下を追加すると、最新のGoバージョンを自動的にチェックします。
+- 保存された設定を削除：`rm $HOME/.go_selected_version`
+- その後シェルを再読み込み：`source ~/.bashrc`
 
-```bash
-# Go 最新バージョンのチェック（動的パス取得）
-if [ -f "$HOME/.config/gomvm/config" ]; then
-  # shellcheck source=/dev/null
-  source "$HOME/.config/gomvm/config"
-  if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
-    INSTALL_DIR=$(dirname "$(dirname "$GOMVM_SCRIPTS_DIR")")
-    SCRIPT_PATH="$INSTALL_DIR/check_latest_go.sh"
-    if [ -f "$SCRIPT_PATH" ]; then
-      source "$SCRIPT_PATH"
-    fi
-  fi
-fi
-```
+### 最新バージョンチェックの有効化
 
-この機能により
+最新バージョンチェック機能は、不要なネットワークリクエストを避けるためにデフォルトでは無効になっています。有効にするには：
+
+1. `~/.bashrc`ファイルを編集します。
+2. gomvm設定セクションで`# source "$SCRIPT_PATH"`の行を見つけます。
+3. `#`文字を削除してコメントを解除します。
+4. ファイルを保存し、`.bashrc`を再読み込みします。
+
+   ```bash
+   source ~/.bashrc
+   ```
+
+有効にすると、この機能は以下のことを行います。
 
 - ログイン時に最新のGoバージョンを確認します
 - 24時間に1回だけチェックし、過度なネットワークリクエストを防止します
 - 最新バージョンがインストールされていない場合、インストールを提案します
 - `--force`オプションで24時間ルールを無視して強制的にチェックできます
+
+手動で最新バージョンをチェックする場合は以下を実行してください。
+
+```bash
+source ~/path/to/go-multi-version-manager/check_latest_go.sh --force
+```
 
 ## スクリプト詳細
 
@@ -204,7 +285,7 @@ fi
 
 ### switch_go_version.sh
 
-指定されたGoバージョンに切り替えます。現在のシェルセッションでこのバージョンを有効にするには、`source`で実行する必要があります。
+指定されたGoバージョンに切り替えます。このスクリプトを`source`と共に実行することで、現在のシェルセッションでこのバージョンを使用し、将来のセッション用にデフォルトとして保存します。
 指定バージョンがインストールされていない場合は、自動的にインストールします。
 
 使用方法
@@ -215,7 +296,7 @@ source ./switch_go_version.sh <goバージョン>
 
 例: `source ./switch_go_version.sh 1.23.0`
 
-デフォルトバージョンに戻るには、`source ~/.bashrc`を実行します。
+このスクリプトは選択したバージョンを保存するようになったため、新しいシェルを開始したり`.bashrc`を再読み込みするたびに切り替える必要がなくなりました。
 
 ### list_go_versions.sh
 

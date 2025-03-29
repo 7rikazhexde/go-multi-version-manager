@@ -68,6 +68,11 @@ GOROOT=$(go"${GO_VERSION}" env GOROOT)
 export GOROOT="$GOROOT"
 export PATH="$GOROOT/bin:$PATH"
 
+# バージョン選択を永続化
+GO_SELECTED_VERSION_FILE="$HOME/.go_selected_version"
+echo "$GO_VERSION" > "$GO_SELECTED_VERSION_FILE"
+print_info "Go $GO_VERSION をデフォルトのバージョンとして設定しました"
+
 # Confirm version switch
 print_success "Go $GO_VERSION に切り替えました。"
 print_info "現在の Go バージョン:"

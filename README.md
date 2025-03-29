@@ -14,10 +14,13 @@ English | [日本語](README_ja.md)
     - [Automatic Installation](#automatic-installation)
     - [Manual Installation](#manual-installation)
     - [Automatic Uninstallation](#automatic-uninstallation)
+  - [Configuration](#configuration)
+    - [Manual .bashrc Configuration](#manual-bashrc-configuration)
+    - [Understanding the Configuration](#understanding-the-configuration)
   - [Usage](#usage)
     - [Basic Commands](#basic-commands)
     - [Switching Go Versions](#switching-go-versions)
-    - [Automatic Latest Version Check](#automatic-latest-version-check)
+    - [Enabling Latest Version Check](#enabling-latest-version-check)
   - [Scripts](#scripts)
     - [install\_go\_replace\_default.sh](#install_go_replace_defaultsh)
     - [install\_go\_with\_command.sh](#install_go_with_commandsh)
@@ -33,11 +36,12 @@ English | [日本語](README_ja.md)
 - These scripts are designed for **Ubuntu**; they are not supported on **Mac** and **Windows**
 - For Go versions managed by `install_go_with_command.sh`, ensure `$HOME/go/bin` is included in your `PATH`
 - Always verify installation with `go version` after setup
+- When switching Go versions using `gomvm switch`, the selected version persists across shell sessions and `.bashrc` reloads
 - For general Go installation guidance, refer to the [official Go documentation](https://go.dev/doc/install)
 
 ## Prerequisite
 
-You must have the Go path set in `~/.bashrc`.
+You must have the Go path set in `~/.bashrc`. A basic configuration looks like this:
 
 ```bash
 ## Go
@@ -102,6 +106,72 @@ This uninstallation script performs the following actions.
 > 1. Go versions in `$HOME/go/bin/`
 > 2. The default Go installation in `/usr/local/go`
 
+## Configuration
+
+### Manual .bashrc Configuration
+
+After installing gomvm, you need to add the following configuration to your `~/.bashrc` file to enable version persistence and other advanced features. Open your `.bashrc` file and add the following code:
+
+```bash
+# Go environment setup - conditional based on gomvm presence
+if command -v gomvm &> /dev/null || [ -f "$HOME/.config/gomvm/config" ]; then
+  # gomvm exists - use advanced version management
+  
+  # Check for persisted version selection
+  GO_SELECTED_VERSION_FILE="$HOME/.go_selected_version"
+  if [ -f "$GO_SELECTED_VERSION_FILE" ] && [ -s "$GO_SELECTED_VERSION_FILE" ]; then
+    GO_VERSION=$(cat "$GO_SELECTED_VERSION_FILE")
+    if [ -x "$HOME/go/bin/go$GO_VERSION" ]; then
+      # Set GOROOT for the selected version
+      export GOROOT=$("$HOME/go/bin/go$GO_VERSION" env GOROOT)
+      # Update PATH (prioritize selected version)
+      export PATH="$GOROOT/bin:$HOME/go/bin:$PATH"
+    else
+      # Default settings if selected version not found
+      export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
+    fi
+  else
+    # Default settings if no version selection file
+    export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
+  fi
+  
+  # Latest version check (disabled by default)
+  # To enable automatic version checking, uncomment the source line below
+  if [ -f "$HOME/.config/gomvm/config" ]; then
+    source "$HOME/.config/gomvm/config"
+    if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
+      INSTALL_DIR=$(dirname "$(dirname "$GOMVM_SCRIPTS_DIR")")
+      SCRIPT_PATH="$INSTALL_DIR/check_latest_go.sh"
+      if [ -f "$SCRIPT_PATH" ]; then
+        # source "$SCRIPT_PATH"  # Uncomment this line to enable automatic version checking
+        :  # No-op placeholder
+      fi
+    fi
+  fi
+else
+  # gomvm not present - use standard Go settings only
+  export PATH="/usr/local/go/bin:$PATH"
+  export PATH="$HOME/go/bin:$PATH"
+fi
+```
+
+After adding this configuration, reload your `.bashrc`:
+
+```bash
+source ~/.bashrc
+```
+
+### Understanding the Configuration
+
+The added configuration performs several important functions:
+
+1. **Conditional Execution**: Only activates advanced features if gomvm is installed
+2. **Version Persistence**: Reads the previously selected Go version from a file and sets it as the active version
+3. **Fallback Mechanism**: Uses the system default Go if the selected version is not available
+4. **Optional Latest Version Check**: Can be enabled to automatically check for new Go versions (commented out by default)
+
+If gomvm is not installed, the configuration simply applies standard Go path settings.
+
 ## Usage
 
 ### Basic Commands
@@ -131,34 +201,45 @@ To switch between installed Go versions.
 source gomvm switch 1.24.1
 ```
 
+The `switch` command will:
+
+1. Change the Go version for your current shell session
+2. Save your version preference to make it persist across shell sessions
+3. Ensure the selected version remains active even after reloading `.bashrc`
+
 > [!IMPORTANT]
 > Always use the `source` command with `switch` to make the changes take effect in your current shell.
 
-### Automatic Latest Version Check
+If you wish to return to the system default Go version, you can either:
 
-Add the following to your `~/.bashrc` to automatically check for the latest Go version.
+- Delete the saved preference: `rm $HOME/.go_selected_version`
+- Then reload your shell: `source ~/.bashrc`
 
-```bash
-# Check for latest Go version (dynamic path detection)
-if [ -f "$HOME/.config/gomvm/config" ]; then
-  # shellcheck source=/dev/null
-  source "$HOME/.config/gomvm/config"
-  if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
-    INSTALL_DIR=$(dirname "$(dirname "$GOMVM_SCRIPTS_DIR")")
-    SCRIPT_PATH="$INSTALL_DIR/check_latest_go.sh"
-    if [ -f "$SCRIPT_PATH" ]; then
-      source "$SCRIPT_PATH"
-    fi
-  fi
-fi
-```
+### Enabling Latest Version Check
 
-This feature
+The latest version check feature is disabled by default to avoid unnecessary network requests. To enable it:
+
+1. Edit your `~/.bashrc` file
+2. Find the line `# source "$SCRIPT_PATH"` in the gomvm configuration section
+3. Uncomment it by removing the `#` character
+4. Save the file and reload your `.bashrc`:
+
+   ```bash
+   source ~/.bashrc
+   ```
+
+Once enabled, this feature:
 
 - Checks for the latest Go version at login
 - Only checks once per 24 hours to avoid excessive network requests
 - Suggests installation if the latest version isn't installed
 - Can be forced to check using the `--force` option, ignoring the 24-hour rule
+
+To manually check for the latest version:
+
+```bash
+source ~/path/to/go-multi-version-manager/check_latest_go.sh --force
+```
 
 ## Scripts
 
@@ -200,7 +281,7 @@ This script allows for multiple versions to be installed in separate directories
 
 ### switch_go_version.sh
 
-Switches to a specified Go version. Run this script with `source` to use the specified Go version in the current shell session. If the specified Go version is not installed, this script will automatically install it.
+Switches to a specified Go version. Run this script with `source` to use the specified Go version in the current shell session and to save it as the default for future sessions. If the specified Go version is not installed, this script will automatically install it.
 
 Usage:
 
@@ -208,7 +289,7 @@ Usage:
 source ./switch_go_version.sh 1.23.0
 ```
 
-To return to the default version set in `.bashrc`, run `source ~/.bashrc`.
+The script now saves your selected version to make it persist across shell sessions, so you don't need to switch every time you start a new shell or reload `.bashrc`.
 
 ### list_go_versions.sh
 

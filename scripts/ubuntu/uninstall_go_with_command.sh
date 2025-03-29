@@ -39,6 +39,9 @@ fi
 # Path to the installed Go version in ${HOME}/go/bin
 GO_BINARY="${HOME}/go/bin/go${GO_VERSION}"
 
+# Path to the selected version file
+GO_SELECTED_VERSION_FILE="${HOME}/.go_selected_version"
+
 # Check if the specified version is installed
 if [ -f "${GO_BINARY}" ]; then
   # Prompt user for confirmation
@@ -47,6 +50,22 @@ if [ -f "${GO_BINARY}" ]; then
   if [[ "${confirm}" =~ ^[Yy]$ ]]; then
     if rm "${GO_BINARY}"; then
       print_success "Go バージョン ${GO_VERSION} を ${HOME}/go/bin から削除しました。"
+      
+      # Check if this version is the currently selected one
+      if [ -f "${GO_SELECTED_VERSION_FILE}" ]; then
+        SELECTED_VERSION=$(cat "${GO_SELECTED_VERSION_FILE}")
+        if [ "${SELECTED_VERSION}" = "${GO_VERSION}" ]; then
+          # Remove the selected version file
+          if rm "${GO_SELECTED_VERSION_FILE}"; then
+            print_warning "削除したバージョン ${GO_VERSION} は現在デフォルトとして設定されていました。"
+            print_info "バージョン選択設定をクリアしました。"
+            print_info "デフォルトのGo環境に戻すには: ${CYAN}source ~/.bashrc${NC}"
+          else
+            print_error "バージョン選択設定の削除に失敗しました。"
+            print_info "手動で削除するには: ${CYAN}rm ${GO_SELECTED_VERSION_FILE}${NC}"
+          fi
+        fi
+      fi
     else
       print_error "Go バージョン ${GO_VERSION} の削除に失敗しました。"
       exit 1

@@ -3,6 +3,15 @@
 # gomvm - Go Multi Version Manager
 # A wrapper script for managing multiple Go versions
 
+# 色の定義
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
 # 安全な終了処理のための関数
 safe_exit() {
   # スクリプトが source で実行された場合は return を使用
@@ -14,6 +23,23 @@ safe_exit() {
   fi
 }
 
+# メッセージ表示のヘルパー関数
+print_info() {
+  echo -e "${BLUE}ℹ️ $1${NC}"
+}
+
+print_success() {
+  echo -e "${GREEN}✅ $1${NC}"
+}
+
+print_warning() {
+  echo -e "${YELLOW}⚠️ $1${NC}"
+}
+
+print_error() {
+  echo -e "${RED}❌ $1${NC}"
+}
+
 # Dynamic configuration - automatically find the script directory
 # Try to load the configuration file if it exists
 GOMVM_CONFIG_DIR="$HOME/.config/gomvm"
@@ -21,7 +47,7 @@ GOMVM_CONFIG_FILE="$GOMVM_CONFIG_DIR/config"
 
 if [ -f "$GOMVM_CONFIG_FILE" ]; then
   # shellcheck source=/dev/null
-  source "$GOMVM_CONFIG_FILE" || echo "Warning: Failed to source config file"
+  source "$GOMVM_CONFIG_FILE" || print_warning "設定ファイルの読み込みに失敗しました"
 fi
 
 # If the environment variable is set, use it
@@ -46,29 +72,29 @@ fi
 
 # Verify the SCRIPT_DIR exists and contains required scripts
 if [ -z "$SCRIPT_DIR" ] || [ ! -d "$SCRIPT_DIR" ] || [ ! -f "$SCRIPT_DIR/switch_go_version.sh" ]; then
-  echo "Error: Could not locate the scripts directory or missing required scripts."
-  echo "Please set the GOMVM_SCRIPTS_DIR environment variable to the path of the ubuntu scripts directory."
-  echo "Example: export GOMVM_SCRIPTS_DIR=/path/to/go-multi-version-manager/scripts/ubuntu"
+  print_error "スクリプトディレクトリが見つからないか、必要なスクリプトがありません。"
+  print_info "GOMVM_SCRIPTS_DIR 環境変数をubuntuスクリプトディレクトリのパスに設定してください。"
+  echo -e "${CYAN}例: export GOMVM_SCRIPTS_DIR=/path/to/go-multi-version-manager/scripts/ubuntu${NC}"
   safe_exit 1
 fi
 
 # Help function
 show_help() {
-  echo "Go Multi Version Manager (gomvm)"
+  echo -e "${CYAN}🔧 Go Multi Version Manager (gomvm)${NC}"
   echo ""
-  echo "Usage:"
-  echo "  gomvm install <version>    - Install Go version"
-  echo "  gomvm switch <version>     - Switch to Go version (use with 'source')"
-  echo "  gomvm list                 - List available Go versions"
-  echo "  gomvm installed            - List installed Go versions"
-  echo "  gomvm uninstall <version>  - Uninstall Go version"
-  echo "  gomvm setup                - Setup gomvm for current user"
-  echo "  gomvm uninstall-self       - Uninstall gomvm itself"
-  echo "  gomvm help                 - Show this help message"
+  echo -e "${PURPLE}使用方法:${NC}"
+  echo -e "  ${GREEN}gomvm install <version>${NC}    - Go バージョンをインストール"
+  echo -e "  ${GREEN}gomvm switch <version>${NC}     - Go バージョンを切り替え (source コマンドと共に使用)"
+  echo -e "  ${GREEN}gomvm list${NC}                 - 利用可能な Go バージョンを一覧表示"
+  echo -e "  ${GREEN}gomvm installed${NC}            - インストール済みの Go バージョンを一覧表示"
+  echo -e "  ${GREEN}gomvm uninstall <version>${NC}  - Go バージョンをアンインストール"
+  echo -e "  ${GREEN}gomvm setup${NC}                - 現在のユーザー用に gomvm をセットアップ"
+  echo -e "  ${GREEN}gomvm uninstall-self${NC}       - gomvm 自体をアンインストール"
+  echo -e "  ${GREEN}gomvm help${NC}                 - このヘルプメッセージを表示"
   echo ""
-  echo "Examples:"
-  echo "  gomvm install 1.24.1       - Install Go 1.24.1"
-  echo "  source gomvm switch 1.24.1 - Switch to Go 1.24.1"
+  echo -e "${PURPLE}例:${NC}"
+  echo -e "  ${GREEN}gomvm install 1.24.1${NC}       - Go 1.24.1 をインストール"
+  echo -e "  ${GREEN}source gomvm switch 1.24.1${NC} - Go 1.24.1 に切り替え"
 }
 
 # Function to execute a script with arguments
@@ -78,7 +104,7 @@ run_script() {
   
   # Check if the script exists
   if [ ! -f "${SCRIPT_DIR}/${script}" ]; then
-    echo "Error: Script ${script} not found in ${SCRIPT_DIR}"
+    print_error "スクリプト ${script} が ${SCRIPT_DIR} に見つかりません"
     safe_exit 1
   fi
   
@@ -89,7 +115,7 @@ run_script() {
   else
     # For other scripts, we can execute them directly
     "${SCRIPT_DIR}/${script}" "$@" || {
-      echo "Error: Script ${script} failed with exit code $?"
+      print_error "スクリプト ${script} は終了コード $? で失敗しました"
       safe_exit 1
     }
   fi
@@ -100,8 +126,8 @@ switch_go_directly() {
   local GO_VERSION=$1
   
   if [ -z "$GO_VERSION" ]; then
-    echo "Error: Missing Go version argument."
-    echo "Usage: source gomvm switch <go_version>"
+    print_error "Go バージョンの引数がありません。"
+    print_info "使用法: source gomvm switch <go_version>"
     safe_exit 1
   fi
   
@@ -112,15 +138,15 @@ switch_go_directly() {
   
   # Check if goX.X.X command exists
   if ! command -v "go${GO_VERSION}" &> /dev/null; then
-    echo "Go version $GO_VERSION is not installed. Installing..."
+    print_info "Go バージョン $GO_VERSION はインストールされていません。インストールします..."
     "${SCRIPT_DIR}/install_go_with_command.sh" "${GO_VERSION}" || {
-      echo "Installation of Go $GO_VERSION failed. Please check your setup."
+      print_error "Go $GO_VERSION のインストールに失敗しました。セットアップを確認してください。"
       safe_exit 1
     }
     
     # Verify installation after setting PATH
     if ! command -v "go${GO_VERSION}" &> /dev/null; then
-      echo "Installation verification failed. Please check your PATH settings."
+      print_error "インストール確認に失敗しました。PATH設定を確認してください。"
       safe_exit 1
     fi
   fi
@@ -134,7 +160,7 @@ switch_go_directly() {
   export PATH="$GOROOT/bin:$PATH"
   
   # Confirm version switch
-  echo "Switched to Go $GO_VERSION."
+  print_success "Go $GO_VERSION に切り替えました。"
   go version
 }
 
@@ -142,8 +168,8 @@ switch_go_directly() {
 case "$1" in
   "install")
     if [ -z "$2" ]; then
-      echo "Error: Version number required."
-      echo "Usage: gomvm install <version>"
+      print_error "バージョン番号が必要です。"
+      print_info "使用法: gomvm install <version>"
       safe_exit 1
     fi
     run_script "install_go_with_command.sh" "$2"
@@ -151,8 +177,8 @@ case "$1" in
   
   "replace-default")
     if [ -z "$2" ]; then
-      echo "Error: Version number required."
-      echo "Usage: gomvm replace-default <version>"
+      print_error "バージョン番号が必要です。"
+      print_info "使用法: gomvm replace-default <version>"
       safe_exit 1
     fi
     run_script "install_go_replace_default.sh" "$2"
@@ -160,8 +186,8 @@ case "$1" in
     
   "install-specific")
     if [ -z "$2" ]; then
-      echo "Error: Version number required."
-      echo "Usage: gomvm install-specific <version>"
+      print_error "バージョン番号が必要です。"
+      print_info "使用法: gomvm install-specific <version>"
       safe_exit 1
     fi
     run_script "install_go_specific.sh" "$2"
@@ -169,15 +195,15 @@ case "$1" in
     
   "switch")
     if [ -z "$2" ]; then
-      echo "Error: Version number required."
-      echo "Usage: source gomvm switch <version>"
+      print_error "バージョン番号が必要です。"
+      print_info "使用法: source gomvm switch <version>"
       safe_exit 1
     fi
     
     # スクリプトが source で実行されたかを確認
     if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-      echo "Warning: 'gomvm switch' must be run with 'source' to affect the current shell."
-      echo "Please run: source gomvm switch $2"
+      print_warning "'gomvm switch' は現在のシェルに影響するため、'source' と共に実行する必要があります。"
+      print_info "以下を実行してください: source gomvm switch $2"
       safe_exit 1
     fi
     
@@ -194,8 +220,8 @@ case "$1" in
     
   "uninstall")
     if [ -z "$2" ]; then
-      echo "Error: Version number required."
-      echo "Usage: gomvm uninstall <version>"
+      print_error "バージョン番号が必要です。"
+      print_info "使用法: gomvm uninstall <version>"
       safe_exit 1
     fi
     run_script "uninstall_go_with_command.sh" "$2"
@@ -203,7 +229,7 @@ case "$1" in
     
   "setup")
     # Setup gomvm for current user
-    echo "Setting up gomvm for current user..."
+    print_info "現在のユーザー用に gomvm をセットアップしています..."
     
     # Create bin directory if it doesn't exist
     mkdir -p "$HOME/.local/bin"
@@ -215,64 +241,64 @@ case "$1" in
     if [ "$SCRIPT_PATH" != "$TARGET_PATH" ]; then
       cp "$SCRIPT_PATH" "$TARGET_PATH"
       chmod +x "$TARGET_PATH"
-      echo "Copied gomvm to $TARGET_PATH"
+      print_success "gomvm を $TARGET_PATH にコピーしました"
     else
-      echo "gomvm is already installed at $TARGET_PATH"
+      print_info "gomvm はすでに $TARGET_PATH にインストールされています"
     fi
     
     # Check if PATH includes ~/.local/bin
     if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
       echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> "$HOME/.bashrc"
-      echo "Added \$HOME/.local/bin to PATH in ~/.bashrc"
-      echo "Please run 'source ~/.bashrc' to update your current session"
+      print_success "\$HOME/.local/bin を ~/.bashrc の PATH に追加しました"
+      print_info "現在のセッションを更新するには 'source ~/.bashrc' を実行してください"
     else
-      echo "\$HOME/.local/bin is already in PATH"
+      print_info "\$HOME/.local/bin はすでに PATH に含まれています"
     fi
     
     # Store the scripts directory in user config
     mkdir -p "$GOMVM_CONFIG_DIR"
     echo "GOMVM_SCRIPTS_DIR=\"$SCRIPT_DIR\"" > "$GOMVM_CONFIG_FILE"
-    echo "Configuration saved to $GOMVM_CONFIG_FILE"
+    print_success "設定を $GOMVM_CONFIG_FILE に保存しました"
     
     echo ""
-    echo "gomvm has been set up successfully!"
-    echo "You can now use 'gomvm' from anywhere."
-    echo "To switch Go versions, use: source gomvm switch <version>"
-    echo "Example: source gomvm switch 1.24.0"
-    echo "Current scripts directory: $SCRIPT_DIR"
+    print_success "gomvm のセットアップが完了しました！"
+    print_info "これで任意の場所から 'gomvm' を使用できます。"
+    print_info "Go バージョンを切り替えるには: source gomvm switch <version>"
+    echo -e "${CYAN}例: source gomvm switch 1.24.0${NC}"
+    print_info "現在のスクリプトディレクトリ: $SCRIPT_DIR"
     ;;
   
   "uninstall-self")
     # Uninstall gomvm
-    echo "Uninstalling gomvm..."
+    print_info "gomvm をアンインストールしています..."
     
     # Confirm uninstallation
-    read -r -p "Are you sure you want to uninstall gomvm? (y/N): " confirm
+    read -r -p "本当に gomvm をアンインストールしますか？ (y/N): " confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-      echo "Uninstallation cancelled."
+      print_info "アンインストールをキャンセルしました。"
       safe_exit 0
     fi
     
     # Remove gomvm binary
     if [ -f "$HOME/.local/bin/gomvm" ]; then
       rm -f "$HOME/.local/bin/gomvm"
-      echo "Removed gomvm binary from $HOME/.local/bin/gomvm"
+      print_success "gomvm バイナリを $HOME/.local/bin/gomvm から削除しました"
     else
-      echo "gomvm binary not found in $HOME/.local/bin"
+      print_info "gomvm バイナリが $HOME/.local/bin に見つかりません"
     fi
     
     # Remove configuration
     if [ -d "$GOMVM_CONFIG_DIR" ]; then
       rm -rf "$GOMVM_CONFIG_DIR"
-      echo "Removed configuration directory $GOMVM_CONFIG_DIR"
+      print_success "設定ディレクトリ $GOMVM_CONFIG_DIR を削除しました"
     fi
     
     echo ""
-    echo "gomvm has been uninstalled successfully."
-    echo "Note: The Go version installations and repository remain untouched."
-    echo "To completely remove everything, you can also delete:"
-    echo "1. The repository directory containing the scripts"
-    echo "2. The Go versions in $HOME/go/bin/ (if installed with 'gomvm install')"
+    print_success "gomvm のアンインストールが完了しました。"
+    print_info "注: Go バージョンのインストールとリポジトリはそのまま残されています。"
+    print_info "すべてを完全に削除するには、以下も削除できます:"
+    echo -e "${CYAN}1. スクリプトを含むリポジトリディレクトリ${NC}"
+    echo -e "${CYAN}2. $HOME/go/bin/ の Go バージョン（'gomvm install' でインストールした場合）${NC}"
     ;;
     
   "help"|"--help"|"-h")
@@ -280,7 +306,7 @@ case "$1" in
     ;;
     
   *)
-    echo "Unknown command: $1"
+    print_error "不明なコマンド: $1"
     show_help
     safe_exit 1
     ;;

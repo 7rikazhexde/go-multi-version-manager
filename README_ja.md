@@ -39,59 +39,30 @@
 ## 📋 前提条件
 
 > [!IMPORTANT]
-> gomvmを正常に動作させるには、以下のGo環境設定を`~/.bashrc`ファイルに追加してください。詳細については、[Go環境変数とPATH設定ガイド](docs/go-environment-settings_ja.md)を参照してください。
+> gomvmはインストール時にGo環境設定を自動で行います。詳細については、[Go環境変数とPATH設定ガイド](docs/go-environment-settings_ja.md)を参照してください。
 
-この設定により以下の機能が有効になります。
+**自動セットアップ**: インストーラーが以下の1行を`~/.bashrc`に追加します：
+
+```bash
+# Go環境設定 - gomvm
+[ -f "$HOME/.config/gomvm/go-env.sh" ] && source "$HOME/.config/gomvm/go-env.sh"
+```
+
+この設定により以下の機能が有効になります：
 
 - ✅ シェルセッション間でのバージョン永続化
 - ✅ 保存された設定に基づく自動バージョン選択
-- ✅ オプションの最新バージョンチェック（デフォルトでは無効）
+- ✅ Go環境設定の分離とクリーンな管理
+- ✅ 単一の設定ファイルによる簡単なメンテナンス
 
-```bash
-# Go環境設定 - gomvmの有無で分岐
-if command -v gomvm &> /dev/null || [ -f "$HOME/.config/gomvm/config" ]; then
-  # gomvmが存在する場合の処理
-  
-  # バージョン永続化ファイルのチェック
-  GO_SELECTED_VERSION_FILE="$HOME/.go_selected_version"
-  if [ -f "$GO_SELECTED_VERSION_FILE" ] && [ -s "$GO_SELECTED_VERSION_FILE" ]; then
-    GO_VERSION=$(cat "$GO_SELECTED_VERSION_FILE")
-    if [ -x "$HOME/go/bin/go$GO_VERSION" ]; then
-      # 選択されたバージョンのGOROOTを設定
-      export GOROOT=$("$HOME/go/bin/go$GO_VERSION" env GOROOT)
-      # PATHを設定（選択バージョン優先）
-      export PATH="$GOROOT/bin:$HOME/go/bin:$PATH"
-    else
-      # 選択バージョンが見つからない場合はデフォルト設定
-      export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
-    fi
-  else
-    # 永続化ファイルがない場合はデフォルト設定
-    export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
-  fi
-  
-  # 最新バージョンチェック（デフォルトでは無効）
-  # 自動バージョンチェックを有効にするには、下記のsourceの行のコメントを解除
-  if [ -f "$HOME/.config/gomvm/config" ]; then
-    source "$HOME/.config/gomvm/config"
-    if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
-      INSTALL_DIR=$(dirname "$(dirname "$GOMVM_SCRIPTS_DIR")")
-      SCRIPT_PATH="$INSTALL_DIR/check_latest_go.sh"
-      if [ -f "$SCRIPT_PATH" ]; then
-        # source "$SCRIPT_PATH"  # この行のコメントを解除すると自動バージョンチェックが有効になります
-        :  # 何もしない（プレースホルダー）
-      fi
-    fi
-  fi
-else
-  # gomvmがない場合は標準的なGo設定のみを適用
-  export PATH="/usr/local/go/bin:$PATH"
-  export PATH="$HOME/go/bin:$PATH"
-fi
-```
+**詳細設定**: 実際のGo環境ロジックは`~/.config/gomvm/go-env.sh`で管理され、以下を提供します：
+
+- 選択されたGoバージョンに基づく動的PATH管理
+- バージョンが選択されていない場合のシステムデフォルトへのフォールバック
+- オプションの最新バージョンチェック（デフォルトでは無効）
 
 > [!NOTE]
-> この設定を追加した後、`source ~/.bashrc`を実行してシェル設定を再読み込みし、変更を反映させてください。
+> インストール後、設定は自動的に適用されます。手動セットアップは不要です。
 
 > [!TIP]
 > gomvmがGoの環境変数とPATH設定をどのように管理するかについての詳細は、[Go環境変数とPATH設定ガイド](docs/go-environment-settings_ja.md)を確認してください。
@@ -139,6 +110,7 @@ curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager
 - 🧹 システムからgomvmリポジトリディレクトリを削除
 - 🧹 設定ディレクトリ（`~/.config/gomvm`）を削除
 - 🧹 `~/.local/bin`からgomvmバイナリを削除
+- 🧹 `~/.bashrc`からGo環境設定をクリーンアップ
 
 > [!WARNING]
 > アンインストール処理では以下は削除されません。
@@ -196,12 +168,27 @@ source gomvm switch 1.24.1
 
 ### 🔍 最新バージョンチェックの有効化
 
-最新バージョンチェック機能は、不要なネットワークリクエストを避けるためにデフォルトでは無効になっています。有効にするには以下を実行してください。
+最新バージョンチェック機能は、不要なネットワークリクエストを避けるため**デフォルトでは無効**になっています。有効にするには以下を実行してください。
 
-1. ✏️ `~/.bashrc`ファイルを編集します
-2. 🔎 gomvm設定セクションで`# source "$SCRIPT_PATH"`の行を見つけます
-3. 🔧 `#`文字を削除してコメントを解除します
-4. 💾 ファイルを保存し、`.bashrc`を再読み込みします
+1. ✏️ Go環境設定ファイルを編集します：
+
+   ```bash
+   nano ~/.config/gomvm/go-env.sh
+   ```
+
+2. 🔎 コメントアウトされた行を見つけます：
+
+   ```bash
+   # source "$SCRIPT_PATH"  # この行のコメントを解除すると最新バージョンチェックが有効になります
+   ```
+
+3. 🔧 `#`文字を削除してコメントを解除します：
+
+   ```bash
+   source "$SCRIPT_PATH"  # 最新バージョンチェックを実行
+   ```
+
+4. 💾 ファイルを保存し、設定を再読み込みします：
 
    ```bash
    source ~/.bashrc

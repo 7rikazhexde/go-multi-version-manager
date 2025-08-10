@@ -39,59 +39,30 @@ English | [日本語](README_ja.md)
 ## 📋 Prerequisite
 
 > [!IMPORTANT]
-> Add the following Go environment configuration to your `~/.bashrc` file for gomvm to work properly. For more details, see [Go Environment Variables and PATH Configuration Guide](docs/go-environment-settings.md).
+> gomvm automatically sets up Go environment configuration during installation. For more details, see [Go Environment Variables and PATH Configuration Guide](docs/go-environment-settings.md).
+
+**Automatic Setup**: The installer adds the following single line to your `~/.bashrc`:
+
+```bash
+# Go環境設定 - gomvm
+[ -f "$HOME/.config/gomvm/go-env.sh" ] && source "$HOME/.config/gomvm/go-env.sh"
+```
 
 This configuration enables:
 
 - ✅ Version persistence across shell sessions
 - ✅ Automatic version selection based on your saved preferences
-- ✅ Optional latest version checking (disabled by default)
+- ✅ Clean separation of Go environment settings
+- ✅ Easy maintenance through a single configuration file
 
-```bash
-# Go environment setup - conditional based on gomvm presence
-if command -v gomvm &> /dev/null || [ -f "$HOME/.config/gomvm/config" ]; then
-  # gomvm exists - use advanced version management
-  
-  # Check for persisted version selection
-  GO_SELECTED_VERSION_FILE="$HOME/.go_selected_version"
-  if [ -f "$GO_SELECTED_VERSION_FILE" ] && [ -s "$GO_SELECTED_VERSION_FILE" ]; then
-    GO_VERSION=$(cat "$GO_SELECTED_VERSION_FILE")
-    if [ -x "$HOME/go/bin/go$GO_VERSION" ]; then
-      # Set GOROOT for the selected version
-      export GOROOT=$("$HOME/go/bin/go$GO_VERSION" env GOROOT)
-      # Update PATH (prioritize selected version)
-      export PATH="$GOROOT/bin:$HOME/go/bin:$PATH"
-    else
-      # Default settings if selected version not found
-      export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
-    fi
-  else
-    # Default settings if no version selection file
-    export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
-  fi
-  
-  # Latest version check (disabled by default)
-  # To enable automatic version checking, uncomment the source line below
-  if [ -f "$HOME/.config/gomvm/config" ]; then
-    source "$HOME/.config/gomvm/config"
-    if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
-      INSTALL_DIR=$(dirname "$(dirname "$GOMVM_SCRIPTS_DIR")")
-      SCRIPT_PATH="$INSTALL_DIR/check_latest_go.sh"
-      if [ -f "$SCRIPT_PATH" ]; then
-        # source "$SCRIPT_PATH"  # Uncomment this line to enable automatic version checking
-        :  # No-op placeholder
-      fi
-    fi
-  fi
-else
-  # gomvm not present - use standard Go settings only
-  export PATH="/usr/local/go/bin:$PATH"
-  export PATH="$HOME/go/bin:$PATH"
-fi
-```
+**Advanced Configuration**: The actual Go environment logic is managed in `~/.config/gomvm/go-env.sh`, which provides:
+
+- Dynamic PATH management based on selected Go version
+- Fallback to system defaults when no version is selected
+- Optional latest version checking (disabled by default)
 
 > [!NOTE]
-> After adding this configuration, reload your shell settings with `source ~/.bashrc` for changes to take effect.
+> After installation, the configuration is automatically applied. Manual setup is not required.
 
 > [!TIP]
 > If you need more details about how gomvm manages Go environment variables and PATH settings, check the [Go Environment Variables and PATH Configuration Guide](docs/go-environment-settings.md).
@@ -141,6 +112,7 @@ This uninstallation script performs the following actions.
 - 🧹 Removes the gomvm repository directory from your system
 - 🧹 Deletes the configuration directory (`~/.config/gomvm`)
 - 🧹 Removes the gomvm binary from `~/.local/bin`
+- 🧹 Cleans up Go environment settings from `~/.bashrc`
 
 > [!WARNING]
 > The uninstallation process does not remove the following.
@@ -198,12 +170,27 @@ If you wish to return to the system default Go version, you can either:
 
 ### 🔍 Enabling Latest Version Check
 
-The latest version check feature is disabled by default to avoid unnecessary network requests. To enable it:
+The latest version check feature is **disabled by default** to avoid unnecessary network requests. To enable it:
 
-1. ✏️ Edit your `~/.bashrc` file
-2. 🔎 Find the line `# source "$SCRIPT_PATH"` in the gomvm configuration section
-3. 🔧 Uncomment it by removing the `#` character
-4. 💾 Save the file and reload your `.bashrc`
+1. ✏️ Edit the Go environment configuration file:
+
+   ```bash
+   nano ~/.config/gomvm/go-env.sh
+   ```
+
+2. 🔎 Find the commented line:
+
+   ```bash
+   # source "$SCRIPT_PATH"  # この行のコメントを解除すると最新バージョンチェックが有効になります
+   ```
+
+3. 🔧 Uncomment it by removing the `#` character:
+
+   ```bash
+   source "$SCRIPT_PATH"  # 最新バージョンチェックを実行
+   ```
+
+4. 💾 Save the file and reload your configuration:
 
    ```bash
    source ~/.bashrc

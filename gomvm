@@ -294,7 +294,7 @@ case "$1" in
     print_success "設定を $GOMVM_CONFIG_FILE に保存しました"
     
     # Copy go-env.sh from repository to user config directory
-    REPO_ROOT=$(dirname "$SCRIPT_DIR")
+    REPO_ROOT=$(dirname "$(dirname "$SCRIPT_DIR")")  # scripts/ubuntu から2つ上がリポジトリルート
     GO_ENV_SOURCE="$REPO_ROOT/go-env.sh"
     GO_ENV_TARGET="$GOMVM_CONFIG_DIR/go-env.sh"
     

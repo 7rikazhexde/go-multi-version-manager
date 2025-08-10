@@ -60,6 +60,14 @@ if [ -z "$INSTALL_DIR" ]; then
   INSTALL_DIR="${INSTALL_DIR}/go-multi-version-manager"
 fi
 
+echo ""
+print_info "以下の項目を削除します："
+echo "• リポジトリディレクトリ: $INSTALL_DIR"
+echo "• 設定ディレクトリ: $GOMVM_CONFIG_DIR"
+echo "• バイナリファイル: $GOMVM_BINARY"
+echo "• .bashrcの設定行"
+echo ""
+
 # インストール先の存在確認
 if [ ! -d "$INSTALL_DIR" ]; then
   print_warning "指定されたインストール先 ($INSTALL_DIR) が見つかりません。"
@@ -73,7 +81,7 @@ else
   fi
 fi
 
-# 構成ディレクトリの削除
+# 構成ディレクトリの削除（go-env.shも含む）
 if [ -d "$GOMVM_CONFIG_DIR" ]; then
   print_info "構成ディレクトリを削除しています: $GOMVM_CONFIG_DIR"
   if rm -rf "$GOMVM_CONFIG_DIR"; then
@@ -99,6 +107,27 @@ else
   print_info "gomvm バイナリ ($GOMVM_BINARY) は存在しません。"
 fi
 
+# .bashrcからgomvm関連の設定行を削除
+BASHRC_FILE="$HOME/.bashrc"
+if [ -f "$BASHRC_FILE" ]; then
+  print_info ".bashrcからgomvm関連の設定を削除しています..."
+  
+  # 一時ファイルを作成して.bashrcをバックアップ
+  cp "$BASHRC_FILE" "${BASHRC_FILE}.gomvm_backup"
+  
+  # gomvm関連の行を削除（複数パターンに対応）
+  sed -i '/# Go環境設定 - gomvm/d' "$BASHRC_FILE"
+  sed -i '/gomvm\/go-env\.sh/d' "$BASHRC_FILE"
+  
+  # 空行が連続する場合は1つにまとめる
+  sed -i '/^$/N;/^\n$/d' "$BASHRC_FILE"
+  
+  print_success ".bashrcからgomvm関連の設定を削除しました"
+  print_info "バックアップ: ${BASHRC_FILE}.gomvm_backup"
+else
+  print_warning ".bashrcファイルが見つかりません: $BASHRC_FILE"
+fi
+
 echo ""
 print_header "アンインストール完了"
 print_success "gomvm がシステムから削除されました。"
@@ -108,8 +137,6 @@ echo ""
 print_info "再インストールする場合は、以下のように実行してください："
 echo "  curl -sSL https://raw.githubusercontent.com/7rikazhexde/go-multi-version-manager/main/gomvm-install.sh | bash"
 echo ""
-print_info "スクリプトディレクトリが見つからない場合の対処法（必要に応じて）:"
-echo "  export GOMVM_SCRIPTS_DIR=/path/to/go-multi-version-manager/scripts/ubuntu"
 print_info "現在のシェルセッションに設定を反映するには、次のコマンドを実行してください："
 echo "  source ~/.bashrc"
 

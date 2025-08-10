@@ -284,7 +284,6 @@ case "$1" in
     if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
       echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> "$HOME/.bashrc"
       print_success "\$HOME/.local/bin を ~/.bashrc の PATH に追加しました"
-      print_info "現在のセッションを更新するには 'source ~/.bashrc' を実行してください"
     else
       print_info "\$HOME/.local/bin はすでに PATH に含まれています"
     fi
@@ -294,12 +293,42 @@ case "$1" in
     echo "GOMVM_SCRIPTS_DIR=\"$SCRIPT_DIR\"" > "$GOMVM_CONFIG_FILE"
     print_success "設定を $GOMVM_CONFIG_FILE に保存しました"
     
+    # Copy go-env.sh from repository to user config directory
+    REPO_ROOT=$(dirname "$SCRIPT_DIR")
+    GO_ENV_SOURCE="$REPO_ROOT/go-env.sh"
+    GO_ENV_TARGET="$GOMVM_CONFIG_DIR/go-env.sh"
+    
+    if [ -f "$GO_ENV_SOURCE" ]; then
+      cp "$GO_ENV_SOURCE" "$GO_ENV_TARGET"
+      chmod +x "$GO_ENV_TARGET"
+      print_success "Go環境設定スクリプトをコピーしました: $GO_ENV_TARGET"
+      print_info "最新バージョンチェックはデフォルトで無効です"
+      print_info "有効にするには $GO_ENV_TARGET を編集してコメントを解除してください"
+    else
+      print_error "Go環境設定スクリプトが見つかりません: $GO_ENV_SOURCE"
+      print_info "リポジトリに go-env.sh ファイルが存在することを確認してください"
+    fi
+    
+    # Add go-env.sh sourcing to .bashrc if not already present
+    BASHRC_LINE="[ -f \"\$HOME/.config/gomvm/go-env.sh\" ] && source \"\$HOME/.config/gomvm/go-env.sh\""
+    if ! grep -q "gomvm/go-env.sh" "$HOME/.bashrc"; then
+      {
+        echo ""
+        echo "# Go環境設定 - gomvm"
+        echo "$BASHRC_LINE"
+      } >> "$HOME/.bashrc"
+      print_success "Go環境設定を ~/.bashrc に追加しました"
+    else
+      print_info "Go環境設定はすでに ~/.bashrc に設定されています"
+    fi
+    
     echo ""
     print_success "gomvm のセットアップが完了しました！"
     print_info "これで任意の場所から 'gomvm' を使用できます。"
     print_info "Go バージョンを切り替えるには: source gomvm switch <version>"
     echo -e "${CYAN}例: source gomvm switch 1.24.0${NC}"
     print_info "現在のスクリプトディレクトリ: $SCRIPT_DIR"
+    print_info "設定を反映するには: source ~/.bashrc"
     ;;
   
   "uninstall-self")

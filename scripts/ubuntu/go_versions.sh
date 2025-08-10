@@ -106,13 +106,18 @@ if [ -d "$HOME/sdk" ]; then
   done
 fi
 
-# GOROOT環境変数が設定されている場合
+# GOROOT環境変数が設定されている場合の情報表示
 if [ -n "$GOROOT" ] && [ -x "$GOROOT/bin/go" ]; then
-  ver=$("$GOROOT/bin/go" version | grep -o 'go[0-9]\+\.[0-9]\+\.[0-9]\+')
-  if [ "$ver" = "$CURRENT_VERSION" ]; then
-    echo -e "  ${YELLOW}★ \$GOROOT/bin/go ($GOROOT/bin/go): $ver${NC} (現在使用中)"
+  # GOROOTが設定されている場合は、実際に使用されているGoバイナリを確認
+  current_go_path=$(which go)
+  goroot_go_path="$GOROOT/bin/go"
+  
+  if [ "$current_go_path" = "$goroot_go_path" ]; then
+    ver=$("$GOROOT/bin/go" version | grep -o 'go[0-9]\+\.[0-9]\+\.[0-9]\+')
+    echo -e "  ${YELLOW}★ \$GOROOT/bin/go ($GOROOT/bin/go): $ver${NC} (GOROOT設定により使用中)"
   else
-    echo -e "  ${GREEN}\$GOROOT/bin/go ($GOROOT/bin/go): $ver${NC}"
+    ver=$("$GOROOT/bin/go" version | grep -o 'go[0-9]\+\.[0-9]\+\.[0-9]\+')
+    echo -e "  ${GREEN}\$GOROOT/bin/go ($GOROOT/bin/go): $ver${NC} (設定されているが未使用)"
   fi
   system_has_versions=true
 fi
@@ -129,14 +134,17 @@ if command -v go &> /dev/null; then
   print_success "$current_version"
   print_info "バイナリの場所: $current_path"
   
-  # GOROOT と GOPATH の情報を表示
-  if [ -n "$GOROOT" ]; then
-    print_info "GOROOT: $GOROOT"
-  fi
+  # 現在の環境変数を正確に表示
+  current_goroot=$(go env GOROOT)
+  current_gopath=$(go env GOPATH)
   
-  GOPATH=$(go env GOPATH)
-  if [ -n "$GOPATH" ]; then
-    print_info "GOPATH: $GOPATH"
+  print_info "GOROOT: $current_goroot"
+  print_info "GOPATH: $current_gopath"
+  
+  # 環境変数として設定されているGOROOTとgoコマンドから取得したGOROOTが異なる場合は警告
+  if [ -n "$GOROOT" ] && [ "$GOROOT" != "$current_goroot" ]; then
+    print_warning "環境変数GOROOT ($GOROOT) と実際のGOROOT ($current_goroot) が異なります"
+    print_info "この不一致は設定の問題を示している可能性があります"
   fi
 else
   print_error "Goコマンドが見つかりません。PATHにGoが含まれていない可能性があります。"

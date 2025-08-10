@@ -51,7 +51,12 @@ fi
 # Check if goX.X.X command exists
 if ! command -v "go${GO_VERSION}" &> /dev/null; then
   print_info "Go バージョン $GO_VERSION がインストールされていません。インストールを開始します..."
-  ./install_go_with_command.sh "${GO_VERSION}"
+  
+  # Get script directory relative to this script
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  
+  # Install the version
+  "${SCRIPT_DIR}/install_go_with_command.sh" "${GO_VERSION}"
 
   # Verify installation after setting PATH
   if ! command -v "go${GO_VERSION}" &> /dev/null; then
@@ -61,12 +66,35 @@ if ! command -v "go${GO_VERSION}" &> /dev/null; then
   print_success "Go $GO_VERSION のインストールに成功しました"
 fi
 
-# Set GOROOT for the specified version
-GOROOT=$(go"${GO_VERSION}" env GOROOT)
+# Get the correct GOROOT for the specified version
+# First, find the binary location
+GO_BINARY_PATH=$(command -v "go${GO_VERSION}")
 
-# Update GOROOT and PATH for the current shell session only
-export GOROOT="$GOROOT"
-export PATH="$GOROOT/bin:$PATH"
+if [ -z "$GO_BINARY_PATH" ]; then
+  print_error "go${GO_VERSION} バイナリが見つかりません。"
+  return 1
+fi
+
+# Get GOROOT from the specific version binary
+NEW_GOROOT=$("go${GO_VERSION}" env GOROOT)
+
+if [ -z "$NEW_GOROOT" ] || [ ! -d "$NEW_GOROOT" ]; then
+  print_error "Go ${GO_VERSION} の GOROOT が取得できません。"
+  return 1
+fi
+
+# Update environment variables in the correct order
+export GOROOT="$NEW_GOROOT"
+export PATH="$NEW_GOROOT/bin:$HOME/go/bin:$PATH"
+
+# Remove duplicate entries from PATH
+PATH_TEMP=$(echo "$PATH" | awk -v RS=':' '!a[$1]++' | paste -sd:)
+export PATH="$PATH_TEMP"
+
+# Set GOPATH to default if not set
+if [ -z "$GOPATH" ]; then
+  export GOPATH="$HOME/go"
+fi
 
 # バージョン選択を永続化
 GO_SELECTED_VERSION_FILE="$HOME/.go_selected_version"
@@ -78,5 +106,7 @@ print_success "Go $GO_VERSION に切り替えました。"
 print_info "現在の Go バージョン:"
 echo -e "${CYAN}$(go version)${NC}"
 print_info "GOROOT: $GOROOT"
+print_info "GOPATH: $GOPATH"
+print_info "バイナリの場所: $(which go)"
 print_warning "この設定は現在のシェルセッションのみ有効です"
 print_info "デフォルト設定に戻すには: ${CYAN}source ~/.bashrc${NC}"

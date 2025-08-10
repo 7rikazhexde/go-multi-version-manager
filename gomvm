@@ -69,25 +69,22 @@ if [ -f "$GOMVM_CONFIG_FILE" ]; then
   source "$GOMVM_CONFIG_FILE" || print_warning "設定ファイルの読み込みに失敗しました"
 fi
 
-# If the environment variable is set, use it
-if [ -n "$GOMVM_SCRIPTS_DIR" ]; then
-  SCRIPT_DIR="$GOMVM_SCRIPTS_DIR"
-else
-  # Try to find the script directory based on this script's location
-  REAL_PATH="$(readlink -f "$0")"
-  
-  # Try various possible locations for the scripts
-  for dir in \
-    "$(dirname "$(dirname "$REAL_PATH")")/scripts/ubuntu" \
-    "$(dirname "$REAL_PATH")/scripts/ubuntu" \
-    "$HOME/go-multi-version-manager/scripts/ubuntu" \
-    "$HOME/golang/go-multi-version-manager/scripts/ubuntu"; do
-    if [ -d "$dir" ]; then
-      SCRIPT_DIR="$dir"
-      break
-    fi
-  done
-fi
+# 現在のディレクトリを最優先
+REAL_PATH="$(readlink -f "$0")"
+CURRENT_DIR_SCRIPTS="$(dirname "$REAL_PATH")/scripts/ubuntu"
+
+# Try various possible locations for the scripts, prioritizing current directory
+for dir in \
+  "$CURRENT_DIR_SCRIPTS" \
+  "$(dirname "$(dirname "$REAL_PATH")")/scripts/ubuntu" \
+  "$GOMVM_SCRIPTS_DIR" \
+  "$HOME/go-multi-version-manager/scripts/ubuntu" \
+  "$HOME/golang/go-multi-version-manager/scripts/ubuntu"; do
+  if [ -d "$dir" ]; then
+    SCRIPT_DIR="$dir"
+    break
+  fi
+done
 
 # Verify the SCRIPT_DIR exists and contains required scripts
 if [ -z "$SCRIPT_DIR" ] || [ ! -d "$SCRIPT_DIR" ] || [ ! -f "$SCRIPT_DIR/switch_go_version.sh" ]; then
@@ -151,17 +148,48 @@ switch_go_directly() {
     fi
   fi
   
-  # Set GOROOT for the specified version
-  local GOROOT
-  GOROOT=$(go"${GO_VERSION}" env GOROOT)
+  # Get the correct GOROOT for the specified version
+  # First, find the binary location
+  local GO_BINARY_PATH
+  GO_BINARY_PATH=$(command -v "go${GO_VERSION}")
   
-  # Update GOROOT and PATH for the current shell session only
-  export GOROOT="$GOROOT"
-  export PATH="$GOROOT/bin:$PATH"
+  if [ -z "$GO_BINARY_PATH" ]; then
+    print_error "go${GO_VERSION} バイナリが見つかりません。"
+    safe_exit 1
+  fi
+  
+  # Get GOROOT from the specific version binary
+  local NEW_GOROOT
+  NEW_GOROOT=$("go${GO_VERSION}" env GOROOT)
+  
+  if [ -z "$NEW_GOROOT" ] || [ ! -d "$NEW_GOROOT" ]; then
+    print_error "Go ${GO_VERSION} の GOROOT が取得できません。"
+    safe_exit 1
+  fi
+  
+  # Update environment variables in the correct order
+  export GOROOT="$NEW_GOROOT"
+  export PATH="$NEW_GOROOT/bin:$HOME/go/bin:$PATH"
+  
+  # Remove duplicate entries from PATH
+  PATH_TEMP=$(echo "$PATH" | awk -v RS=':' '!a[$1]++' | paste -sd:)
+  export PATH="$PATH_TEMP"
+  
+  # Set GOPATH to default if not set
+  if [ -z "$GOPATH" ]; then
+    export GOPATH="$HOME/go"
+  fi
+  
+  # Save version selection for persistence
+  local GO_SELECTED_VERSION_FILE="$HOME/.go_selected_version"
+  echo "$GO_VERSION" > "$GO_SELECTED_VERSION_FILE"
   
   # Confirm version switch
   print_success "Go $GO_VERSION に切り替えました。"
-  go version
+  print_info "現在の Go バージョン: $(go version)"
+  print_info "GOROOT: $GOROOT"
+  print_info "GOPATH: $GOPATH"
+  print_info "バイナリの場所: $(which go)"
 }
 
 # Main command handler

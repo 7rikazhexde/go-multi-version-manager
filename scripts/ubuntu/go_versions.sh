@@ -106,6 +106,19 @@ if [ -d "$HOME/sdk" ]; then
   done
 fi
 
+# /usr/local/go<version> ディレクトリもチェック (install_go_specific.sh でインストールされた場合)
+for specific_dir in /usr/local/go[0-9]*; do
+  if [ -d "$specific_dir" ] && [ -x "$specific_dir/bin/go" ]; then
+    ver=$("$specific_dir/bin/go" version | grep -o 'go[0-9]\+\.[0-9]\+\.[0-9]\+')
+    if [ "$ver" = "$CURRENT_VERSION" ]; then
+      echo -e "  ${YELLOW}★ $specific_dir/bin/go: $ver${NC} (現在使用中)"
+    else
+      echo -e "  ${GREEN}$specific_dir/bin/go: $ver${NC}"
+    fi
+    system_has_versions=true
+  fi
+done
+
 # GOROOT環境変数が設定されている場合の情報表示
 if [ -n "$GOROOT" ] && [ -x "$GOROOT/bin/go" ]; then
   # GOROOTが設定されている場合は、実際に使用されているGoバイナリを確認
